@@ -1,0 +1,69 @@
+{
+  "name": "@andyrmitchell/pg-queue",
+  "version": "0.1.0",
+  "description": "",
+  "exports": {
+    ".": {
+      "module": "./dist/index.mjs",
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "type": "commonjs",
+  "files": [
+    "dist",
+    "postgres",
+    "README.MD",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build_release": "npm run build_prepare && np",
+    "build": "tsup",
+    "pkglint": "./build/publint_pipeable.sh",
+    "build_prepare": "npm run build && npm run pkglint",
+    "prepublishOnly": "npm run build_prepare",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@andyrmitchell/pg-testable": "^0.2.1",
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
+    "@babel/preset-typescript": "^7.23.3",
+    "@electric-sql/pglite": "^0.1.5",
+    "@types/jest": "^29.5.12",
+    "@types/uuid": "^9.0.8",
+    "babel-jest": "^29.7.0",
+    "babel-plugin-transform-import-meta": "^2.2.1",
+    "filenamify": "^6.0.0",
+    "jest": "^29.7.0",
+    "jest-fetch-mock": "^3.0.3",
+    "openai": "^4.47.1",
+    "ts-jest": "^29.1.2",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@andyrmitchell/utils": "^0.4.0",
+    "@types/inquirer": "^9.0.7",
+    "inquirer": "^9.2.22",
+    "pkg-dir": "^8.0.0",
+    "uuid": "^9.0.1",
+    "zod": "^3.23.8"
+  }
+}
