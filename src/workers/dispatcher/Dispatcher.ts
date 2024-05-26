@@ -1,5 +1,5 @@
 /* 
-Only use this if you can't use pgnetworker directly inside Postgres (it requires pg_net and pg_cron to be installed in postgres)
+Only use this if you can't use dispatcher directly inside Postgres (it requires pg_net and pg_cron to be installed in postgres)
 It can be run in a long worker (set exitAfterSeconds to undefined), or called by a cron as a HTTP endpoint (in which case make exitAfterSeconds match the cycle of the cron, and fall under the time limit of the http endpoint).
 */
 

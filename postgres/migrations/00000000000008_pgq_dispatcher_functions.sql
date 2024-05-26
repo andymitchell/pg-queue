@@ -9,25 +9,25 @@
 -- pg_net
 --  If not available, it must use something else that's capable of asynchronous requests (pgsql-http is not), otherwise a (most likely) long running http function will clog connections.
 --  Or, use something like pgsql-http (or AWS Postgres Lambda caller) to a http function, but have that http function return immediately after asynchonously calling another function, which in turn calls back to "pgq_schema_placeholder".release_job. 
---      You wouldn't use pgnetworker_process_current_jobs_by_cron in that situation, relying instead on the eventual http function calling back to "pgq_schema_placeholder".release_job. 
+--      You wouldn't use dispatcher_process_current_jobs_by_cron in that situation, relying instead on the eventual http function calling back to "pgq_schema_placeholder".release_job. 
 -- Providing bearer tokens
 --  Currently its set up for Supabase, locked to the SERVICE_TOKEN for heightened power/gate-keeping in the http callbacks. 
 --  Any other could be added, just give it a technique name in pgnet_queue_name_end_point and pgnet_execute
 
 
-CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".is_pgnetworker_available()
+CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".is_dispatcher_available()
 RETURNS BOOLEAN
 LANGUAGE plpgsql 
 AS $$
 BEGIN
 
-    RETURN "pgq_schema_placeholder".has_function('pgnetworker_set_cron_schedule');
+    RETURN "pgq_schema_placeholder".has_function('dispatcher_set_cron_schedule');
 
 END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".envspecific_install_pgnetworker_functions()  
+CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".envspecific_install_dispatcher_functions()  
 RETURNS VOID
 SECURITY DEFINER
 SET search_path = "pgq_schema_placeholder"
@@ -43,7 +43,7 @@ BEGIN
 
 
 
-        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_set_cron_schedule(
+        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_set_cron_schedule(
             p_picker_interval_seconds INTEGER DEFAULT 10,
             p_picker_sleep_if_empty_seconds DOUBLE PRECISION DEFAULT 0.5,
             p_picker_sleep_if_jobs_seconds DOUBLE PRECISION DEFAULT 0,
@@ -65,23 +65,23 @@ BEGIN
 
 
             PERFORM cron.schedule(
-                'pgnetworker_pick_next_job_by_cron_',
+                'dispatcher_pick_next_job_by_cron_',
                 p_picker_interval_seconds || ' seconds',
-                FORMAT('SELECT "pgq_schema_placeholder".pgnetworker_pick_next_job_by_cron(%L, %L, %L);', 
+                FORMAT('SELECT "pgq_schema_placeholder".dispatcher_pick_next_job_by_cron(%L, %L, %L);', 
                     p_picker_interval_seconds, p_picker_sleep_if_empty_seconds, p_picker_sleep_if_jobs_seconds)
             );
 
             PERFORM cron.schedule(
-                'pgnetworker_process_current_jobs_by_cron_',
+                'dispatcher_process_current_jobs_by_cron_',
                 p_currentchecker_interval_seconds || ' seconds',
-                FORMAT('SELECT "pgq_schema_placeholder".pgnetworker_process_current_jobs_by_cron(%L, %L);', 
+                FORMAT('SELECT "pgq_schema_placeholder".dispatcher_process_current_jobs_by_cron(%L, %L);', 
                     p_currentchecker_interval_seconds, p_currentchecker_sleep_seconds)
             );
 
             PERFORM cron.schedule(
-                'pgnetworker_cleanup_unused_queues_',
+                'dispatcher_cleanup_unused_queues_',
                 p_cleanup_unused_queues_interval_hours || ' hours',
-                FORMAT('SELECT "pgq_schema_placeholder".pgnetworker_cleanup_unused_queues(%L);', 
+                FORMAT('SELECT "pgq_schema_placeholder".dispatcher_cleanup_unused_queues(%L);', 
                     p_cleanup_unused_queues_inactive_duration)
             );
 
@@ -90,21 +90,21 @@ BEGIN
         END;
         $i$;
 
-        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_cancel_cron()
+        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_cancel_cron()
         RETURNS VOID 
         LANGUAGE plpgsql 
         AS $i$
         BEGIN
             SELECT cron.unschedule(
-                'pgnetworker_pick_next_job_by_cron_'
+                'dispatcher_pick_next_job_by_cron_'
             );
 
             SELECT cron.unschedule(
-                'pgnetworker_process_current_jobs_by_cron_'
+                'dispatcher_process_current_jobs_by_cron_'
             );
 
             SELECT cron.unschedule(
-                'pgnetworker_cleanup_unused_queues_'
+                'dispatcher_cleanup_unused_queues_'
             );
 
             
@@ -123,7 +123,7 @@ BEGIN
 
 
         -- A routine CRON that tries to pick jobs for the duration of the minimum CRON scheduled window (i.e. 1 minute)
-        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_pick_next_job_by_cron(
+        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_pick_next_job_by_cron(
             p_loop_seconds DOUBLE PRECISION DEFAULT 60,
             p_sleep_if_empty DOUBLE PRECISION DEFAULT 0.5,
             p_sleep_if_jobs DOUBLE PRECISION DEFAULT 0
@@ -188,7 +188,7 @@ BEGIN
                 ELSE
                     RAISE NOTICE 'Picked job with ID: %', r.job_id;
 
-                    PERFORM "pgq_schema_placeholder".pgnetworker_execute(
+                    PERFORM "pgq_schema_placeholder".dispatcher_execute(
                         p_queue_name => r.queue_name,
                         p_job_id => r.job_id,
                         p_payload => r.payload,
@@ -213,7 +213,7 @@ BEGIN
 
 
 
-        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_execute(
+        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_execute(
             p_queue_name TEXT,
             p_job_id INT,
             p_payload JSONB,
@@ -233,7 +233,7 @@ BEGIN
             v_body JSONB;
             v_timeout INT;
         BEGIN
-            RAISE NOTICE 'pgnetworker executing job_id %', p_job_id;
+            RAISE NOTICE 'dispatcher executing job_id %', p_job_id;
             
             -- Retrieve the details for this queue 
             SELECT endpoint_method, endpoint_bearer_token_location, endpoint_url, endpoint_timeout_milliseconds
@@ -278,7 +278,7 @@ BEGIN
                 RAISE EXCEPTION 'v_http_verb must be POST, or GET';
             END IF;
 
-            INSERT INTO "pgq_schema_placeholder".pgnetworker_current_jobs (request_id, job_id, manual_release)
+            INSERT INTO "pgq_schema_placeholder".dispatcher_current_jobs (request_id, job_id, manual_release)
             VALUES (v_request_id, p_job_id, p_manual_release);
 
         END;
@@ -293,7 +293,7 @@ BEGIN
         -- ####################
         -- RESPOND TO CONSUMER PROCESS RESULTS 
 
-        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_process_current_jobs_by_cron(
+        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_process_current_jobs_by_cron(
             p_loop_seconds INTEGER DEFAULT 60,
             p_sleep DOUBLE PRECISION DEFAULT 1
         ) 
@@ -313,7 +313,7 @@ BEGIN
             WHILE clock_timestamp() < v_end_time LOOP
                 v_loop_count := v_loop_count + 1;
                 
-                PERFORM "pgq_schema_placeholder".pgnetworker_process_current_jobs();
+                PERFORM "pgq_schema_placeholder".dispatcher_process_current_jobs();
                 IF p_sleep > 0.05 THEN 
                     PERFORM pg_sleep(p_sleep);
                 ELSE 
@@ -328,7 +328,7 @@ BEGIN
         -- 
         -- Loop through records in current_jobs and get response from pg_net
         --
-        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_process_current_jobs()
+        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_process_current_jobs()
         RETURNS VOID 
         SECURITY DEFINER
         SET search_path = "pgq_schema_placeholder", extensions, net, vault
@@ -341,7 +341,7 @@ BEGIN
 
 
 
-            FOR current_job IN SELECT * FROM pgnetworker_current_jobs 
+            FOR current_job IN SELECT * FROM dispatcher_current_jobs 
             FOR UPDATE SKIP LOCKED
             LOOP
                 RAISE NOTICE 'Processing job_id: %, request_id: %', current_job.job_id, current_job.request_id;
@@ -361,7 +361,7 @@ BEGIN
                         PERFORM "pgq_schema_placeholder".release_job(current_job.job_id, 'complete');
                     END IF;
 
-                    DELETE FROM "pgq_schema_placeholder".pgnetworker_current_jobs
+                    DELETE FROM "pgq_schema_placeholder".dispatcher_current_jobs
                     WHERE request_id = current_job.request_id;
                 ELSIF v_response_result.status = 'ERROR' THEN
                     -- WARNING: Although the status column can be 'PENDING', 'SUCCESS', or 'ERROR', there is a bug that makes all 'PENDING' requests displayed as 'ERROR'. https://github.com/supabase/pg_net#requests-api 
@@ -372,7 +372,7 @@ BEGIN
                         PERFORM "pgq_schema_placeholder".release_job(current_job.job_id, 'failed');
                     END IF;
 
-                    DELETE FROM "pgq_schema_placeholder".pgnetworker_current_jobs
+                    DELETE FROM "pgq_schema_placeholder".dispatcher_current_jobs
                     WHERE request_id = current_job.request_id;
                 ELSE
                     RAISE NOTICE 'Job still in progress or not found (job_id: %)', current_job.job_id;
@@ -386,14 +386,14 @@ BEGIN
         -- CLEAN UP
 
         -- queue_config can slow down max_concurrency checks when picking jobs, so periodically remove unusued ones
-        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_cleanup_unused_queues(
+        CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_cleanup_unused_queues(
             inactive_duration INTERVAL
         )
         RETURNS VOID
         LANGUAGE plpgsql
         AS $i$
         BEGIN
-            DELETE FROM "pgq_schema_placeholder".pgnetworker_queue_name_end_point qc
+            DELETE FROM "pgq_schema_placeholder".dispatcher_queue_name_end_point qc
             WHERE qc.updated_at < NOW() - inactive_duration AND 
                 "pgq_schema_placeholder".is_queue_inactive(qc.queue_name, inactive_duration);
         END;
@@ -401,42 +401,42 @@ BEGIN
         
 
 
-        --pgnetworker_triggered_process_job_DEAD: Removed because the CRON _should_ be fast enough to run all jobs. And this was duplicating the logic required, which increases the chance of inconsistencies. E.g. this has forgotten to add checks for start_after. Consider bringing it back as a speed optimisation, but I'm unconvinced.
-        --pgnetworker_triggered_process_job_DEAD:CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pgnetworker_triggered_process_job() 
-        --pgnetworker_triggered_process_job_DEAD:RETURNS TRIGGER
-        --pgnetworker_triggered_process_job_DEAD:SECURITY DEFINER
-        --pgnetworker_triggered_process_job_DEAD:SET search_path = "pgq_schema_placeholder", extensions, net, vault
-        --pgnetworker_triggered_process_job_DEAD:AS $i$
-        --pgnetworker_triggered_process_job_DEAD:DECLARE
-        --pgnetworker_triggered_process_job_DEAD:    v_pgnetworker_queues_matching INTEGER;
-        --pgnetworker_triggered_process_job_DEAD:BEGIN
-        --pgnetworker_triggered_process_job_DEAD:    RAISE NOTICE 'Processing job_id: %', NEW.job_id;
-        --pgnetworker_triggered_process_job_DEAD:    -- Check pgnetworker is allowed to run this queue
-        --pgnetworker_triggered_process_job_DEAD:    SELECT COUNT(*) 
-        --pgnetworker_triggered_process_job_DEAD:    INTO v_pgnetworker_queues_matching 
-        --pgnetworker_triggered_process_job_DEAD:    FROM "pgq_schema_placeholder".pgnetworker_queue_name_end_point
-        --pgnetworker_triggered_process_job_DEAD:    WHERE queue_name = NEW.queue_name;
-        --pgnetworker_triggered_process_job_DEAD:
-        --pgnetworker_triggered_process_job_DEAD:    -- Check the queue for this isn't at max concurrency 
-        --pgnetworker_triggered_process_job_DEAD:    IF v_pgnetworker_queues_matching > 0 AND "pgq_schema_placeholder".is_queue_available_wrt_max_concurrency(NEW.queue_name) THEN
-        --pgnetworker_triggered_process_job_DEAD:        -- I believe triggers fire before the insert is committed, so no need for SKIP LOCKED. Check? 
-        --pgnetworker_triggered_process_job_DEAD:        UPDATE job_queue
-        --pgnetworker_triggered_process_job_DEAD:        SET status = 'processing'
-        --pgnetworker_triggered_process_job_DEAD:        WHERE job_id = NEW.job_id AND status = '';
-        --pgnetworker_triggered_process_job_DEAD:        PERFORM "pgq_schema_placeholder".pgnetworker_execute(
-        --pgnetworker_triggered_process_job_DEAD:                p_queue_name => NEW.queue_name,
-        --pgnetworker_triggered_process_job_DEAD:                p_job_id => NEW.job_id,
-        --pgnetworker_triggered_process_job_DEAD:                p_payload => NEW.payload
-        --pgnetworker_triggered_process_job_DEAD:            );
-        --pgnetworker_triggered_process_job_DEAD:    END IF;
-        --pgnetworker_triggered_process_job_DEAD:    RETURN NEW;
-        --pgnetworker_triggered_process_job_DEAD:END;
-        --pgnetworker_triggered_process_job_DEAD:$i$ LANGUAGE plpgsql;
-        --pgnetworker_triggered_process_job_DEAD:-- Adding the trigger to the queue table:
-        --pgnetworker_triggered_process_job_DEAD:CREATE TRIGGER process_job_trigger
-        --pgnetworker_triggered_process_job_DEAD:AFTER INSERT ON "pgq_schema_placeholder".job_queue
-        --pgnetworker_triggered_process_job_DEAD:FOR EACH ROW
-        --pgnetworker_triggered_process_job_DEAD:EXECUTE FUNCTION "pgq_schema_placeholder".pgnetworker_triggered_process_job();
+        --dispatcher_triggered_process_job_DEAD: Removed because the CRON _should_ be fast enough to run all jobs. And this was duplicating the logic required, which increases the chance of inconsistencies. E.g. this has forgotten to add checks for start_after. Consider bringing it back as a speed optimisation, but I'm unconvinced.
+        --dispatcher_triggered_process_job_DEAD:CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".dispatcher_triggered_process_job() 
+        --dispatcher_triggered_process_job_DEAD:RETURNS TRIGGER
+        --dispatcher_triggered_process_job_DEAD:SECURITY DEFINER
+        --dispatcher_triggered_process_job_DEAD:SET search_path = "pgq_schema_placeholder", extensions, net, vault
+        --dispatcher_triggered_process_job_DEAD:AS $i$
+        --dispatcher_triggered_process_job_DEAD:DECLARE
+        --dispatcher_triggered_process_job_DEAD:    v_dispatcher_queues_matching INTEGER;
+        --dispatcher_triggered_process_job_DEAD:BEGIN
+        --dispatcher_triggered_process_job_DEAD:    RAISE NOTICE 'Processing job_id: %', NEW.job_id;
+        --dispatcher_triggered_process_job_DEAD:    -- Check dispatcher is allowed to run this queue
+        --dispatcher_triggered_process_job_DEAD:    SELECT COUNT(*) 
+        --dispatcher_triggered_process_job_DEAD:    INTO v_dispatcher_queues_matching 
+        --dispatcher_triggered_process_job_DEAD:    FROM "pgq_schema_placeholder".dispatcher_queue_name_end_point
+        --dispatcher_triggered_process_job_DEAD:    WHERE queue_name = NEW.queue_name;
+        --dispatcher_triggered_process_job_DEAD:
+        --dispatcher_triggered_process_job_DEAD:    -- Check the queue for this isn't at max concurrency 
+        --dispatcher_triggered_process_job_DEAD:    IF v_dispatcher_queues_matching > 0 AND "pgq_schema_placeholder".is_queue_available_wrt_max_concurrency(NEW.queue_name) THEN
+        --dispatcher_triggered_process_job_DEAD:        -- I believe triggers fire before the insert is committed, so no need for SKIP LOCKED. Check? 
+        --dispatcher_triggered_process_job_DEAD:        UPDATE job_queue
+        --dispatcher_triggered_process_job_DEAD:        SET status = 'processing'
+        --dispatcher_triggered_process_job_DEAD:        WHERE job_id = NEW.job_id AND status = '';
+        --dispatcher_triggered_process_job_DEAD:        PERFORM "pgq_schema_placeholder".dispatcher_execute(
+        --dispatcher_triggered_process_job_DEAD:                p_queue_name => NEW.queue_name,
+        --dispatcher_triggered_process_job_DEAD:                p_job_id => NEW.job_id,
+        --dispatcher_triggered_process_job_DEAD:                p_payload => NEW.payload
+        --dispatcher_triggered_process_job_DEAD:            );
+        --dispatcher_triggered_process_job_DEAD:    END IF;
+        --dispatcher_triggered_process_job_DEAD:    RETURN NEW;
+        --dispatcher_triggered_process_job_DEAD:END;
+        --dispatcher_triggered_process_job_DEAD:$i$ LANGUAGE plpgsql;
+        --dispatcher_triggered_process_job_DEAD:-- Adding the trigger to the queue table:
+        --dispatcher_triggered_process_job_DEAD:CREATE TRIGGER process_job_trigger
+        --dispatcher_triggered_process_job_DEAD:AFTER INSERT ON "pgq_schema_placeholder".job_queue
+        --dispatcher_triggered_process_job_DEAD:FOR EACH ROW
+        --dispatcher_triggered_process_job_DEAD:EXECUTE FUNCTION "pgq_schema_placeholder".dispatcher_triggered_process_job();
         
     END IF;
 

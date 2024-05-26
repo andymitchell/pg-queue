@@ -1,8 +1,9 @@
-import { createMultiStepPgQueue } from "./MultiStepPgQueue";
+import { MultiStepPgQueue } from "./MultiStepPgQueue";
 import { IMultiStepPgQueue } from "./types";
 
+
 export {
-    createMultiStepPgQueue
+    MultiStepPgQueue
 }
 
 export type {

@@ -1,27 +1,27 @@
 --
 
 
-CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".test_pgnetworker_basic()
+CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".test_dispatcher_basic()
 RETURNS boolean
 LANGUAGE plpgsql
 AS $$
 BEGIN
 
 
-    IF "pgq_schema_placeholder".is_pgnetworker_available() = true THEN
+    IF "pgq_schema_placeholder".is_dispatcher_available() = true THEN
         -- ############
         -- CHECK THE CRON LOOPS AS EXPECTED 
 
-        --SELECT diag("pgq_schema_placeholder".testhelper_rows_to_text($q$ select "pgq_schema_placeholder".pgnetworker_pick_next_job_by_cron(1, 0.1, 1) $q$, 'rows'));
+        --SELECT diag("pgq_schema_placeholder".testhelper_rows_to_text($q$ select "pgq_schema_placeholder".dispatcher_pick_next_job_by_cron(1, 0.1, 1) $q$, 'rows'));
         PERFORM "pgq_schema_placeholder".testhelper_results_eq(
                 $q$ 
                     SELECT EXISTS (
                         SELECT 1 
-                        WHERE (select "pgq_schema_placeholder".pgnetworker_pick_next_job_by_cron(0.5, 0.1, 1)) BETWEEN 4 AND 6
+                        WHERE (select "pgq_schema_placeholder".dispatcher_pick_next_job_by_cron(0.5, 0.1, 1)) BETWEEN 4 AND 6
                         ) AS condition_result;
                 $q$,
                 $q$ VALUES (TRUE) $q$,
-                'pgnetworker_pick_next_job_by_cron should have a loop count in a range'
+                'dispatcher_pick_next_job_by_cron should have a loop count in a range'
             );
 
 
@@ -62,8 +62,8 @@ BEGIN
 
         -- Let the cron run on it 
         PERFORM "pgq_schema_placeholder".testhelper_lives_ok(
-            $q$ select "pgq_schema_placeholder".pgnetworker_pick_next_job_by_cron(0.2, 0.5, 0.5) $q$, 
-            'pgnetworker_pick_next_job_by_cron runs without error for randomq_pgnw_a'
+            $q$ select "pgq_schema_placeholder".dispatcher_pick_next_job_by_cron(0.2, 0.5, 0.5) $q$, 
+            'dispatcher_pick_next_job_by_cron runs without error for randomq_pgnw_a'
         );
 
         -- Check it's processing the job 
@@ -75,7 +75,7 @@ BEGIN
 
         -- Check it's tracking the request 
         PERFORM "pgq_schema_placeholder".testhelper_results_eq(
-                $q$ select COUNT(*) as c FROM "pgq_schema_placeholder".pgnetworker_current_jobs a INNER JOIN "pgq_schema_placeholder".job_queue b ON a.job_id = b.job_id  WHERE b.queue_name = 'randomq_pgnw_a' AND b.status = 'processing' $q$,
+                $q$ select COUNT(*) as c FROM "pgq_schema_placeholder".dispatcher_current_jobs a INNER JOIN "pgq_schema_placeholder".job_queue b ON a.job_id = b.job_id  WHERE b.queue_name = 'randomq_pgnw_a' AND b.status = 'processing' $q$,
                 $q$ VALUES (1::BIGINT) $q$,
                 'The randomq_pgnw_a job should have created a current_job with a request'
             );
@@ -89,8 +89,8 @@ BEGIN
 
         -- Retrieve the http response
         PERFORM "pgq_schema_placeholder".testhelper_lives_ok(
-            $q$ select "pgq_schema_placeholder".pgnetworker_process_current_jobs() $q$,
-            'pgnetworker_process_current_jobs runs without error for randomq_pgnw_a'
+            $q$ select "pgq_schema_placeholder".dispatcher_process_current_jobs() $q$,
+            'dispatcher_process_current_jobs runs without error for randomq_pgnw_a'
         );
 
         -- Check current processing jobs are cleared out (complete or failed)
@@ -102,7 +102,7 @@ BEGIN
 
         -- Check the request tracking is cleared out (complete or failed)
         PERFORM "pgq_schema_placeholder".testhelper_results_eq(
-                $q$ select COUNT(*) as c FROM "pgq_schema_placeholder".pgnetworker_current_jobs $q$,
+                $q$ select COUNT(*) as c FROM "pgq_schema_placeholder".dispatcher_current_jobs $q$,
                 $q$ VALUES (0::BIGINT) $q$,
                 'The randomq_pgnw_a job should cleared the worker '
             );
@@ -115,8 +115,8 @@ BEGIN
             );
 
 
-        -- $q$ SELECT "pgq_schema_placeholder".pgnetworker_update_queue_config('randomq_pgnw_a', 'GET', '', 'https://postman-echo.com/get') $q$,
-        -- $q$ SELECT "pgq_schema_placeholder".pgnetworker_update_queue_config('randomq_pgnw_a', 'POST', '', 'host.docker.internal:54321/rest/v1/test_job_queue_callback') $q$,
+        -- $q$ SELECT "pgq_schema_placeholder".dispatcher_update_queue_config('randomq_pgnw_a', 'GET', '', 'https://postman-echo.com/get') $q$,
+        -- $q$ SELECT "pgq_schema_placeholder".dispatcher_update_queue_config('randomq_pgnw_a', 'POST', '', 'host.docker.internal:54321/rest/v1/test_job_queue_callback') $q$,
         -- Verify it was received
         PERFORM "pgq_schema_placeholder".testhelper_results_eq(
                 $q$ select COUNT(*) as c FROM public.test_job_queue_callback_result $q$,

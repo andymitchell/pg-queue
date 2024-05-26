@@ -8,6 +8,7 @@ export interface IPgQueue<T extends object> extends IPgQueueBase<T> {
 
     pickNextJob(pIgnoreMaxConcurrency?: boolean): Promise<PickedJob<T> | undefined> 
     releaseJob(pJobId: number, pResult: JobQueueReleaseTypes): Promise<void>
+    ownsJob(x: unknown):x is JobQueueDb<T>;
 
     getConfig():IPgQueueConfig;
 

@@ -67,7 +67,7 @@ This assumes you're using serverless functions and pushing jobs to them (instead
 ## Make the queue work with serverless
 
 Make sure there's an event loop that repeatedly pick jobs and sends it to serverless
-- Pgnetworker does this if you want it to run in Postgress 
+- dispatcher does this if you want it to run in Postgress 
     - Postgres handles the "did it complete" problem neatly, without requiring the function to release its job from the queue, because pg_net has a table of successful calls (and it's long running itself, so it can wait for calls to complete).
 - A long running process loops and picks jobs and calls the end point, then releases when they succeed 
 - A 3rd party CRON calls a http function (acting as a manager), which picks jobs constantly and uses 'fetch' to call their serverless function. 
@@ -115,7 +115,7 @@ It needs an Event Loop picks and routes jobs.
 ### Queue per function, mapped to http end point, but they clean up 
 
 It could be a Queue setting that any event handler won't release the job after. 
-Instead, it'll let the endpoint handler release it. Useful if we don't have the pgnetworker or other long running CRON available. 
+Instead, it'll let the endpoint handler release it. Useful if we don't have the dispatcher or other long running CRON available. 
 
 
 

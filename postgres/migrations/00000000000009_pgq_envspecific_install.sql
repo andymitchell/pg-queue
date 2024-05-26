@@ -11,4 +11,4 @@
 
 
 SELECT "pgq_schema_placeholder".envspecific_install_job_cron();
-SELECT "pgq_schema_placeholder".envspecific_install_pgnetworker_functions();
+SELECT "pgq_schema_placeholder".envspecific_install_dispatcher_functions();

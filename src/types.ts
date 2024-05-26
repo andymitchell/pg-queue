@@ -1,7 +1,7 @@
 import {z, ZodAny} from "zod";
 
 
-export type Queryable = {
+export interface Queryable {
     exec(q:string, transaction?: Queryable):Promise<void>,
     query<T extends Record<string,any> = Record<string, any>>(query:DbQuery, transaction?: Queryable):Promise<{rows: T[]}>
 }
@@ -17,7 +17,7 @@ export const GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER = new RegExp(PGQ_SCHEMA_PLACEHO
 
 
 
-type DbQueryArgTypes = string | number | object | boolean | null | DbQueryArgTypes[];
+type DbQueryArgTypes = string | number | boolean | null | DbQueryArgTypes[];
 type DbQueryArgs = DbQueryArgTypes[]
 export type DbQuery = {
     q:string, 

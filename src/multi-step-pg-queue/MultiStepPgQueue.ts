@@ -8,6 +8,7 @@ import { IPgQueue, PgQueue } from "../pg-queue";
 
 
 
+
 type Logger<T extends object> = {
     error:(message: string, type?: string, body?: MultiStepJobQueueDb<T>) => void;
 }
@@ -19,9 +20,6 @@ type Options<T extends object> = {
     }
 }
 
-export function createMultiStepPgQueue<T extends object, S extends Steps<T>>(db:Queryable, queueName:string, steps:S, payloadSchema:z.Schema<T>, options?: Options<T>, schema = DEFAULT_SCHEMA) {
-    return new MultiStepPgQueue<z.infer<typeof payloadSchema>, S>(db, queueName, steps, payloadSchema, options, schema);
-}
 
 export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> implements IMultiStepPgQueue<T> {
 

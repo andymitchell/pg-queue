@@ -8,7 +8,7 @@
 -- Call "pgq_schema_placeholder".add_job
 -- Then either:-
 --  Consume by calling "pgq_schema_placeholder".pick_next_job
---  Or activate pgnetworker to be your consumer, which calls http functions to execute each job 
+--  Or activate dispatcher to be your consumer, which calls http functions to execute each job 
 --
 -- # ALT ENVIRONMENTS
 -- pg_cron

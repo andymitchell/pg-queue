@@ -3,7 +3,7 @@
 
 
 import { DEFAULT_SCHEMA, DbQuery, Queryable } from "../types";
-import { IPgQueue, JobQueueReleaseTypes, PickedJob } from "./types";
+import { IPgQueue, JobQueueDb, JobQueueReleaseTypes, PickedJob, isJobQueueDb } from "./types";
 import { pgqc } from ".";
 import { PostgresHelpers } from "@andyrmitchell/utils";
 import { IPgQueueConfig, PgQueueConfig } from "../pg-queue-config";
@@ -76,6 +76,11 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
 
     async releaseJob(pJobId: number, pResult: JobQueueReleaseTypes): Promise<void> {
         return await pgqc.releaseJob(this.db, pJobId, pResult, this.escapedSchemaName);
+    }
+
+    ownsJob(x: unknown):x is JobQueueDb<T> {
+        const isQueueSchema = isJobQueueDb(x);
+        return isQueueSchema;
     }
 
     getConfig():IPgQueueConfig {
