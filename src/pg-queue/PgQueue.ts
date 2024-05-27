@@ -58,7 +58,7 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
     }
 
     async pickNextJob(pIgnoreMaxConcurrency?: boolean): Promise<PickedJob<T> | undefined> {
-        const job = await pgqc.pickNextJob<T>(this.db, this.queueName, undefined, pIgnoreMaxConcurrency, this.escapedSchemaName);
+        const job = await pgqc.pickNextJob<T>(this.db, this.queueName, undefined, undefined, pIgnoreMaxConcurrency, this.escapedSchemaName);
 
         if( job ) {
             return {

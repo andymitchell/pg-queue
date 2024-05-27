@@ -82,7 +82,7 @@ export class Dispatcher {
             
 
             // Pick the next job 
-            const nextJob = await pgqc.pickNextJob(this.db, undefined, queueNames, undefined, this.schemaName);
+            const nextJob = await pgqc.pickNextJob(this.db, undefined, queueNames, undefined, undefined, this.schemaName);
             if( nextJob ) {
                 //console.log('#JOBLOOP nextJob', nextJob);
                 const queue = queues.find(x => x.queue_name===nextJob.queue_name);

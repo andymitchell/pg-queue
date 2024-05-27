@@ -19,10 +19,7 @@ SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_place
 SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'job_result_type', ARRAY['failed', 'paused', 'complete']);
 SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'endpoint_method', ARRAY['GET', 'POST']);
 SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'endpoint_bearer_token_location_type', ARRAY['', 'supabase_vault', 'inline']);
---CREATE TYPE "pgq_schema_placeholder".job_status_type AS ENUM ('', 'failed', 'processing', 'complete');
---CREATE TYPE "pgq_schema_placeholder".job_result_type AS ENUM ('failed', 'paused', 'complete');
---CREATE TYPE "pgq_schema_placeholder".endpoint_method AS ENUM ('GET', 'POST');
---CREATE TYPE "pgq_schema_placeholder".endpoint_bearer_token_location_type AS ENUM ('', 'supabase_vault', 'inline');
+
 
 
 
@@ -72,7 +69,8 @@ CREATE INDEX IF NOT EXISTS idx_job_queue_queue_name
 ON "pgq_schema_placeholder".job_queue(queue_name);
 CREATE INDEX IF NOT EXISTS idx_job_queue_retries_remaining
 ON "pgq_schema_placeholder".job_queue(retries_remaining);
-
+CREATE INDEX IF NOT EXISTS idx_job_queue_payload_multi_step_id
+ON "pgq_schema_placeholder".job_queue USING btree ((payload->>'multi_step_id'));
 
 CREATE TABLE IF NOT EXISTS "pgq_schema_placeholder".job_queue_event_log (
     log_id SERIAL PRIMARY KEY,

@@ -117,7 +117,7 @@ BEGIN
 
     -- Make sure ignoring max_concurrency succeeds (takes us to 3 processing)
     PERFORM "pgq_schema_placeholder".testhelper_results_eq(
-            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_e', NULL, TRUE) $q$,
+            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_e', NULL, NULL, TRUE) $q$,
             $q$ VALUES('randomq_e') $q$,
             'pick_next_job should work with a queue config and max concurrency set, for item 3, with ignore max_currency turned off'
         );
@@ -154,7 +154,7 @@ BEGIN
 
     -- It should be able to pick again 
     PERFORM "pgq_schema_placeholder".testhelper_results_eq(
-            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_e', NULL, TRUE) $q$,
+            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_e', NULL, NULL, TRUE) $q$,
             $q$ VALUES('randomq_e') $q$,
             'pick_next_job should work with a queue config and max concurrency set, for item 4, after releasing'
         );

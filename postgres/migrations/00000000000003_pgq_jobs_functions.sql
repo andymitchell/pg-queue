@@ -49,9 +49,11 @@ $$ LANGUAGE plpgsql;
 
 
 
+DROP FUNCTION IF EXISTS "pgq_schema_placeholder".pick_next_job(TEXT, TEXT[], BOOLEAN); -- The type signature has changed, so drop the previous one. 
 CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".pick_next_job(
     p_queue_name TEXT DEFAULT NULL,
     p_allowed_queue_names TEXT[] DEFAULT NULL, -- If p_queue_name is NULL, the caller can still restrict to certain queues 
+    p_multi_step_id TEXT DEFAULT NULL,
     p_ignore_max_concurrency BOOLEAN DEFAULT FALSE -- The caller - e.g. cron - can do an optimization to check if any queue cares about max_concurrency 
 ) 
 RETURNS SETOF "pgq_schema_placeholder".job_queue
@@ -75,6 +77,7 @@ BEGIN
         start_after <= NOW() AND 
         (p_queue_name IS NULL OR queue_name = p_queue_name) AND 
         (p_allowed_queue_names IS NULL OR queue_name = ANY(p_allowed_queue_names)) AND 
+        (p_multi_step_id IS NULL OR payload->>'multi_step_id' = p_multi_step_id) AND
         (v_unavailable_queue_names IS NULL OR NOT queue_name = ANY(v_unavailable_queue_names))
     FOR UPDATE SKIP LOCKED
     LIMIT 1;

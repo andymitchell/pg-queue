@@ -8,11 +8,13 @@ import { JobQueueReleaseTypes, JobQueueDb, isJobQueueDb, IPgQueue } from "../pg-
 export interface IMultiStepPgQueue<T extends object> extends IPgQueueBase<T> {
 
     getRawQueue():IPgQueue<T>;
+    processNextJob(pIgnoreMaxConcurrency?: boolean): Promise<ProcessJobResponse>;
 
 };
 
 export type ProcessJobResponse = {
-    status: 'ok'
+    status: 'ok',
+    had_job: boolean
 } | 
 {
     status: 'error',

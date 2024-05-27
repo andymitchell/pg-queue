@@ -172,7 +172,7 @@ BEGIN
                 v_loop_count := v_loop_count + 1;
                 
 
-                r := "pgq_schema_placeholder".pick_next_job(NULL, v_allowed_queue_names, v_ignore_max_concurrency);
+                r := "pgq_schema_placeholder".pick_next_job(NULL, v_allowed_queue_names, NULL, v_ignore_max_concurrency);
                 
                 IF r IS NULL THEN
                     RAISE NOTICE 'No job was found.';

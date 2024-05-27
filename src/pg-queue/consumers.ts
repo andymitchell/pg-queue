@@ -5,8 +5,8 @@ import {JobQueueDb, JobQueueReleaseTypes } from "./types";
 
 
 
-export async function pickNextJob<T extends object>(db:Queryable, pQueueName?: string, pAllowedQueueNames?: string[], pIgnoreMaxConcurrency?: boolean, schema = DEFAULT_SCHEMA): Promise<JobQueueDb<T> | undefined> {
-    const result = await db.query<JobQueueDb<T>>({ q: `SELECT * FROM ${PostgresHelpers.escapeIdentifier(schema)}.pick_next_job($1, $2, $3)`, args: [pQueueName ?? null, pAllowedQueueNames ?? null, pIgnoreMaxConcurrency ?? false] });
+export async function pickNextJob<T extends object>(db:Queryable, pQueueName?: string, pAllowedQueueNames?: string[], pMultiStepId?:string, pIgnoreMaxConcurrency?: boolean, schema = DEFAULT_SCHEMA): Promise<JobQueueDb<T> | undefined> {
+    const result = await db.query<JobQueueDb<T>>({ q: `SELECT * FROM ${PostgresHelpers.escapeIdentifier(schema)}.pick_next_job($1, $2, $3, $4)`, args: [pQueueName ?? null, pAllowedQueueNames ?? null, pMultiStepId ?? null, pIgnoreMaxConcurrency ?? false] });
     return result.rows[0];
 }
 

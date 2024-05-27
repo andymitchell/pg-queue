@@ -4,7 +4,7 @@ import { IMultiStepPgQueue, MultiStepJobQueueDb, MultiStepJobQueueDbPayload, Pro
 
 
 import { z } from "zod";
-import { IPgQueue, PgQueue } from "../pg-queue";
+import { IPgQueue, PgQueue, pgqc } from "../pg-queue";
 
 
 
@@ -75,6 +75,26 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
         return isQueueSchema && x.payload.multi_step_id===this.id;
     }
 
+    /**
+     * Use this with a long-runner, to loop picking the next job and running it 
+     * @param pIgnoreMaxConcurrency 
+     * @returns 
+     */
+    async processNextJob(pIgnoreMaxConcurrency?: boolean): Promise<ProcessJobResponse> {
+        const job = await pgqc.pickNextJob<T>(this.db, this.queueName, undefined, this.id, pIgnoreMaxConcurrency, this.schemaName) as MultiStepJobQueueDb<T> | undefined;
+
+        if( job ) {
+            return this.runNextStepForJob(job);
+        } else {
+            return {status: 'ok', had_job: false};
+        }
+    }
+
+    /**
+     * Use this when receiving a job from a dispatcher
+     * @param x 
+     * @returns 
+     */
     async processJob(x: unknown):Promise<ProcessJobResponse> {
         if( this.ownsJob(x) ) {
             return await this.runNextStepForJob(x);
@@ -114,7 +134,7 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
                 }
             }
 
-            return {status: 'ok'};
+            return {status: 'ok', had_job: true};
         } catch(e) {
             
             console.warn("MultiStep job failed", body, e);

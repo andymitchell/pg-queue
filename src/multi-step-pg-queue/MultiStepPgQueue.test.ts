@@ -82,4 +82,68 @@ describe('MultiStepPgQueue', () => {
 
     })
 
+    test('MultiStepPgQueue longrunner style', async () => {
+
+        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+
+        const state: {
+            current_step?: {
+                id: string,
+                jobID: number,
+                payload: any
+            }
+        } = {};
+
+        const queueName = 'test_q1';
+        
+
+        const msq = new MultiStepPgQueue(
+            db.db, 
+            queueName,
+            [
+                {
+                    id: 'no1',
+                    handler: async (payload, jobID) => {
+                        state.current_step = {id: 'no1', jobID, payload};
+                    }
+                }
+            ],
+            z.object({name: z.string()}),
+            undefined, 
+            db.schema
+        )
+        const q = msq.getRawQueue();
+
+        await msq.addJob({
+            name: 'Bob'
+        });
+
+        await msq.addJob({
+            name: 'Alice'
+        });
+
+        const resultCount1 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        expect(resultCount1.rows.length).toBe(2);
+        expect(resultCount1.rows[0]!.payload.name).toBe('Bob');
+        expect(resultCount1.rows[1]!.payload.name).toBe('Alice');
+        
+        const result1 = await msq.processNextJob();
+        expect(result1.status).toBe('ok'); if( result1.status!=='ok') throw new Error("noop - typeguard");
+        expect(result1.had_job).toBe(true);
+
+        const resultCount2 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        expect(resultCount2.rows.length).toBe(1);
+
+        const result2 = await msq.processNextJob();
+        expect(result2.status).toBe('ok'); if( result2.status!=='ok') throw new Error("noop - typeguard");
+        
+        const resultCount3 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        expect(resultCount3.rows.length).toBe(0);
+
+        const result3 = await msq.processNextJob();
+        expect(result3.status).toBe('ok'); if( result3.status!=='ok') throw new Error("noop - typeguard");
+        expect(result3.had_job).toBe(false);
+
+    })
+
 });

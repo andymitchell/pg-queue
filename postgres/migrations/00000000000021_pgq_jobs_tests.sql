@@ -67,7 +67,7 @@ BEGIN
 
     -- Try picking a job
     PERFORM "pgq_schema_placeholder".testhelper_results_eq(
-            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_b', NULL, FALSE) $q$,
+            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_b') $q$,
             $q$ VALUES('randomq_b') $q$,
             'pick_next_job runs ok'
         );
@@ -100,7 +100,7 @@ BEGIN
 
     -- Try picking a job
     PERFORM "pgq_schema_placeholder".testhelper_results_eq(
-            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_multi_1', NULL, FALSE) $q$,
+            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_multi_1', NULL, NULL, FALSE) $q$,
             $q$ VALUES('randomq_multi_1') $q$,
             'pick_next_job runs ok for randomq_multi_1 (it should be only 1 row)'
         );
@@ -282,6 +282,29 @@ BEGIN
             'pick_next_job should work, as queue is allowed'
         );
 
+    -- ############
+    -- PICK JOB WITH p_multi_step
+
+    PERFORM "pgq_schema_placeholder".testhelper_lives_ok(
+        $q$ SELECT "pgq_schema_placeholder".add_job('randomq_ms_1', '{"opinion":"x"}') $q$,
+        'add_job runs without error for randomq_ms_1'
+    );
+
+    PERFORM "pgq_schema_placeholder".testhelper_lives_ok(
+        $q$ SELECT "pgq_schema_placeholder".add_job('randomq_ms_1', '{"multi_step_id":"ms1"}') $q$,
+        'add_job runs without error for randomq_ms_1, that includes multi_step_id'
+    );
+
+    PERFORM "pgq_schema_placeholder".testhelper_is_empty(
+            $q$ select queue_name FROM "pgq_schema_placeholder".pick_next_job('randomq_ms_1', NULL, 'ms2') $q$,
+            'pick_next_job should be empty for this queue as ms2 is not a thing'
+        );
+
+    PERFORM "pgq_schema_placeholder".testhelper_results_eq(
+            $q$ select payload->>'multi_step_id' FROM "pgq_schema_placeholder".pick_next_job('randomq_ms_1', NULL, 'ms1') $q$,
+            $q$ VALUES('ms1') $q$,
+            'pick_next_job runs ok for randomq_ms_1 and picks ms1'
+        );
 
 
     -- ############
