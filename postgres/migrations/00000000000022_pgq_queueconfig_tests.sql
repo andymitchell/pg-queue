@@ -15,10 +15,9 @@ BEGIN
         'update_queue_config runs ok for randomq_f'
     );
 
-    PERFORM "pgq_schema_placeholder".testhelper_throws_ok(
+    PERFORM "pgq_schema_placeholder".testhelper_lives_ok(
         $q$ SELECT "pgq_schema_placeholder".update_queue_config('randomq_f', 2, 30000, 5000, 'failed', TRUE) $q$,
-        NULL,
-        'update_queue_config should fail for randomq_f with endpoint_active set TRUE, because it needs every other parameter'
+        'update_queue_config should succeed for randomq_f with endpoint_active set TRUE, even with missing parameters, because it uses defaults'
     );
 
     PERFORM "pgq_schema_placeholder".testhelper_lives_ok(

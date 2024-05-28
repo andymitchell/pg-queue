@@ -16,11 +16,11 @@ DROP FUNCTION IF EXISTS "pgq_schema_placeholder".update_queue_config( -- Signatu
 );
 CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".update_queue_config( 
     p_queue_name TEXT,
-    p_max_concurrency INTEGER,
-    p_pause_between_retries_milliseconds INTEGER,
-    p_timeout_milliseconds INTEGER,
-    p_timeout_with_result "pgq_schema_placeholder".job_result_type,
-    p_endpoint_active BOOLEAN,
+    p_max_concurrency INTEGER DEFAULT NULL,
+    p_pause_between_retries_milliseconds INTEGER DEFAULT NULL,
+    p_timeout_milliseconds INTEGER DEFAULT NULL,
+    p_timeout_with_result "pgq_schema_placeholder".job_result_type DEFAULT NULL,
+    p_endpoint_active BOOLEAN DEFAULT NULL,
     p_endpoint_method "pgq_schema_placeholder".endpoint_method DEFAULT NULL,
     p_endpoint_bearer_token_location "pgq_schema_placeholder".endpoint_bearer_token_location_type DEFAULT NULL,
     p_endpoint_url TEXT DEFAULT NULL,
@@ -33,7 +33,35 @@ SET search_path = "pgq_schema_placeholder"
 AS $$
 DECLARE 
     v_supabase_vault_key UUID;
+    v_existing_record RECORD;
+    v_defaults JSONB;
 BEGIN
+
+    -- Fetch column defaults (as text - they'll need to be cast below)
+    SELECT "pgq_schema_placeholder".get_table_defaults('queue_config') INTO v_defaults;
+
+    -- Fetch existing record for the given queue_name
+    SELECT * INTO v_existing_record 
+    FROM "pgq_schema_placeholder".queue_config 
+    WHERE queue_name = p_queue_name;
+
+
+    -- Check if endpoint_active is true, check it has everything it needs 
+    IF COALESCE(p_endpoint_active, v_existing_record.endpoint_active, FALSE) THEN
+        -- Ensure required fields are provided or already exist
+        IF p_endpoint_method IS NULL AND v_existing_record.endpoint_method IS NULL THEN
+            RAISE EXCEPTION 'endpoint_method must be provided or already exist when endpoint_active is true';
+        END IF;
+        IF p_endpoint_url IS NULL AND v_existing_record.endpoint_url IS NULL THEN
+            RAISE EXCEPTION 'endpoint_url must be provided or already exist when endpoint_active is true';
+        END IF;
+        IF p_endpoint_timeout_milliseconds IS NULL AND v_existing_record.endpoint_timeout_milliseconds IS NULL THEN
+            RAISE EXCEPTION 'endpoint_timeout_milliseconds must be provided or already exist when endpoint_active is true';
+        END IF;
+        IF p_endpoint_manual_release IS NULL AND v_existing_record.endpoint_manual_release IS NULL THEN
+            RAISE EXCEPTION 'endpoint_manual_release must be provided or already exist when endpoint_active is true';
+        END IF;
+    END IF;
 
     -- Upsert configuration for a specific queue
     INSERT INTO "pgq_schema_placeholder".queue_config (
@@ -51,32 +79,33 @@ BEGIN
     ) 
     VALUES (
         p_queue_name, 
-        p_max_concurrency, 
-        p_pause_between_retries_milliseconds,
-        p_timeout_milliseconds,
-        p_timeout_with_result,
-        p_endpoint_active,
-        p_endpoint_method,
-        p_endpoint_bearer_token_location,
-        p_endpoint_url,
-        p_endpoint_timeout_milliseconds,
-        p_endpoint_manual_release
+        COALESCE(p_max_concurrency, (v_defaults->>'max_concurrency')::INTEGER), 
+        COALESCE(p_pause_between_retries_milliseconds, (v_defaults->>'pause_between_retries_milliseconds')::INTEGER),
+        COALESCE(p_timeout_milliseconds, (v_defaults->>'timeout_milliseconds')::INTEGER),
+        COALESCE(p_timeout_with_result, (v_defaults->>'timeout_with_result')::"pgq_schema_placeholder".job_result_type),
+        COALESCE(p_endpoint_active, (v_defaults->>'endpoint_active')::BOOLEAN),
+        COALESCE(p_endpoint_method, (v_defaults->>'endpoint_method')::"pgq_schema_placeholder".endpoint_method),
+        COALESCE(p_endpoint_bearer_token_location, (v_defaults->>'endpoint_bearer_token_location')::"pgq_schema_placeholder".endpoint_bearer_token_location_type),
+        COALESCE(p_endpoint_url, (v_defaults->>'endpoint_url')::TEXT),
+        COALESCE(p_endpoint_timeout_milliseconds, (v_defaults->>'endpoint_timeout_milliseconds')::INTEGER),
+        COALESCE(p_endpoint_manual_release, (v_defaults->>'endpoint_manual_release')::BOOLEAN)
     ) 
     ON CONFLICT (queue_name) 
     DO UPDATE 
     SET 
-        max_concurrency = EXCLUDED.max_concurrency,
-        pause_between_retries_milliseconds = EXCLUDED.pause_between_retries_milliseconds,
-        timeout_milliseconds = EXCLUDED.timeout_milliseconds,
-        endpoint_active = EXCLUDED.endpoint_active,
-        endpoint_method = EXCLUDED.endpoint_method,
-        endpoint_bearer_token_location = EXCLUDED.endpoint_bearer_token_location,
-        endpoint_url = EXCLUDED.endpoint_url,
-        endpoint_timeout_milliseconds = EXCLUDED.endpoint_timeout_milliseconds,
-        endpoint_manual_release = EXCLUDED.endpoint_manual_release,
+        max_concurrency = COALESCE(EXCLUDED.max_concurrency, "pgq_schema_placeholder".queue_config.max_concurrency, (v_defaults->>'max_concurrency')::INTEGER),
+        pause_between_retries_milliseconds = COALESCE(EXCLUDED.pause_between_retries_milliseconds, "pgq_schema_placeholder".queue_config.pause_between_retries_milliseconds, (v_defaults->>'pause_between_retries_milliseconds')::INTEGER),
+        timeout_milliseconds = COALESCE(EXCLUDED.timeout_milliseconds, "pgq_schema_placeholder".queue_config.timeout_milliseconds, (v_defaults->>'timeout_milliseconds')::INTEGER),
+        timeout_with_result = COALESCE(EXCLUDED.timeout_with_result, "pgq_schema_placeholder".queue_config.timeout_with_result, (v_defaults->>'timeout_with_result')::"pgq_schema_placeholder".job_result_type),
+        endpoint_active = COALESCE(EXCLUDED.endpoint_active, "pgq_schema_placeholder".queue_config.endpoint_active, (v_defaults->>'endpoint_active')::BOOLEAN),
+        endpoint_method = COALESCE(EXCLUDED.endpoint_method, "pgq_schema_placeholder".queue_config.endpoint_method),
+        endpoint_bearer_token_location = COALESCE(EXCLUDED.endpoint_bearer_token_location, "pgq_schema_placeholder".queue_config.endpoint_bearer_token_location, (v_defaults->>'endpoint_bearer_token_location')::"pgq_schema_placeholder".endpoint_bearer_token_location_type),
+        endpoint_url = COALESCE(EXCLUDED.endpoint_url, "pgq_schema_placeholder".queue_config.endpoint_url, (v_defaults->>'endpoint_url')::TEXT),
+        endpoint_timeout_milliseconds = COALESCE(EXCLUDED.endpoint_timeout_milliseconds, "pgq_schema_placeholder".queue_config.endpoint_timeout_milliseconds, (v_defaults->>'endpoint_timeout_milliseconds')::INTEGER),
+        endpoint_manual_release = COALESCE(EXCLUDED.endpoint_manual_release, "pgq_schema_placeholder".queue_config.endpoint_manual_release, (v_defaults->>'endpoint_manual_release')::BOOLEAN),
         endpoint_bearer_token_inline_value = CASE 
-                                            WHEN EXCLUDED.endpoint_active = FALSE THEN NULL 
-                                            ELSE "pgq_schema_placeholder".queue_config.endpoint_bearer_token_inline_value 
+                                            WHEN EXCLUDED.endpoint_active = FALSE THEN (v_defaults->>'endpoint_bearer_token_inline_value')::TEXT 
+                                            ELSE COALESCE("pgq_schema_placeholder".queue_config.endpoint_bearer_token_inline_value, (v_defaults->>'endpoint_bearer_token_inline_value')::TEXT)
                                         END;
     
 

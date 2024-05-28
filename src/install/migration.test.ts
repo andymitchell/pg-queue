@@ -132,6 +132,22 @@ describe('migration sql', () => {
 
     });
 
+    test('get_table_defaults function', async () => {
+
+        const customSchema = generateUniqueSchema();
+
+    
+        await install(reader, queryablePglite, {
+            'schema_name': customSchema
+        });
+
+        const result = await dbPglite.query<{defaults:Record<string, any>, timeout_milliseconds: number, endpoint_active: boolean}>(`SELECT defaults, (defaults->>'timeout_milliseconds')::INTEGER as timeout_milliseconds, (defaults->>'endpoint_active')::BOOLEAN as endpoint_active  FROM (SELECT "${customSchema}".get_table_defaults($1) AS defaults) a`, ['queue_config']);
+        
+        expect(result.rows[0]!.timeout_milliseconds).toBe(30000);
+        expect(result.rows[0]!.endpoint_active).toBe(false);
+
+    });
+
     test('run tap-compatible tests ok', async () => {
 
         const dbPgmock: PgTestableInstance<any> = PgTestable.newDb(true, 'pgmock');

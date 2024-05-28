@@ -71,7 +71,6 @@ describe('PgQueue', () => {
         const queue = new PgQueue<{name: string}>(db.db, 'test_q1', db.schema);
         queue.getConfig().set({
             pause_between_retries_milliseconds: 100,
-            endpoint_active: false,
             timeout_milliseconds: 30000,
             timeout_with_result: "complete",
             max_concurrency: 10

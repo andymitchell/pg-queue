@@ -1,9 +1,9 @@
 import { PostgresHelpers } from "@andyrmitchell/utils";
 import { DEFAULT_SCHEMA, Queryable } from "../types";
-import { QueueConfigDb, QueueListOptions } from "./types";
+import { QueueConfig, QueueListOptions } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
-export async function listQueues(db:Queryable, options?: QueueListOptions, schema = DEFAULT_SCHEMA):Promise<QueueConfigDb[]> {
+export async function listQueues(db:Queryable, options?: QueueListOptions, schema = DEFAULT_SCHEMA):Promise<QueueConfig[]> {
 
     // Prepare optional AND clauses. Each array item should start parameters from $1 (concatSqlParameters will then merge)
     const whereAndClauses:{sql: string, parameters: any[]}[] = [];
@@ -23,7 +23,7 @@ export async function listQueues(db:Queryable, options?: QueueListOptions, schem
         args = [...args, ...whereAndClausesPrepared.parameters];
     }
     
-    const result = await db.query<QueueConfigDb>({q, args});
+    const result = await db.query<QueueConfig>({q, args});
     return result.rows;
 }
 

@@ -14,7 +14,7 @@ That means this doesn't need to stay alive long enough to track every spawned jo
 
 
 import { pgqc } from "../../pg-queue";
-import {  QueueConfigActiveEndpointDb, QueueConfigDb, pgqcc } from "../../pg-queue-config";
+import {  QueueConfigActiveEndpointDb, QueueConfig, pgqcc } from "../../pg-queue-config";
 import { DEFAULT_SCHEMA, Queryable} from "../../types";
 import { sleep } from "@andyrmitchell/utils";
 
@@ -49,7 +49,7 @@ export class Dispatcher {
         
         // Get the queues this works for (those that use a http end point)
         const queueRows = await pgqcc.listQueues(this.db, {endpoint_active: true}, this.schemaName);
-        const queues:QueueConfigActiveEndpointDb[] = queueRows.filter((config:QueueConfigDb):config is QueueConfigActiveEndpointDb => {
+        const queues:QueueConfigActiveEndpointDb[] = queueRows.filter((config:QueueConfig):config is QueueConfigActiveEndpointDb => {
             if( config.endpoint_active ) {
                 if( !config.endpoint_manual_release ) { // #MANUAL_RELEASE
                     console.debug("Can only process manual config, because this Edge function probably cannot keep alive long enough to check the job completed. Therefore the called http job must release itself.");

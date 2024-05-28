@@ -20,11 +20,7 @@ describe('PgQueueConfig', () => {
 
         const queueConfig = new PgQueueConfig(db.db, 'test_q1', db.schema);
         await queueConfig.set({
-            max_concurrency: 25,
-            timeout_milliseconds: 30000,
-            timeout_with_result: 'complete',
-            pause_between_retries_milliseconds: 5000,
-            endpoint_active: false,
+            max_concurrency: 25
         });
 
         const configObj = await queueConfig.get();

@@ -17,8 +17,7 @@ $$ LANGUAGE plpgsql;
 
 SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'job_status_type', ARRAY['', 'failed', 'processing', 'complete']);
 SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'job_result_type', ARRAY['failed', 'paused', 'complete']);
-SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'endpoint_method', ARRAY['GET', 'POST']);
-SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'endpoint_bearer_token_location_type', ARRAY['', 'supabase_vault', 'inline']);
+
 
 
 

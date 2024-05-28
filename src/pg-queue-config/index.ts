@@ -1,6 +1,6 @@
 import { PgQueueConfig } from './PgQueueConfig';
 import * as pgqcc from './consumers';
-import { IPgQueueConfig, QueueConfigActiveEndpointDb, QueueConfigDb } from './types';
+import { IPgQueueConfig, QueueConfigActiveEndpointDb, QueueConfig } from './types';
 
 export {
     PgQueueConfig,
@@ -9,6 +9,6 @@ export {
 
 export type {
     IPgQueueConfig,
-    QueueConfigDb,
+    QueueConfig,
     QueueConfigActiveEndpointDb
 }

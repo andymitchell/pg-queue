@@ -1,6 +1,6 @@
 import { PostgresHelpers } from "@andyrmitchell/utils";
 import { DEFAULT_SCHEMA, Queryable } from "../types";
-import { IPgQueueConfig, QueueConfig, QueueConfigDb, QueueConfigDbUpdate, QueueListOptions } from "./types";
+import { IPgQueueConfig, QueueConfig, QueueConfigActiveDetails, QueueConfigCore } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { pgqcc } from ".";
 
@@ -16,8 +16,8 @@ export class PgQueueConfig implements IPgQueueConfig {
     }
 
 
-    async get():Promise<QueueConfigDb | undefined> {
-        const result = await this.db.query<QueueConfigDb>({
+    async get():Promise<QueueConfig | undefined> {
+        const result = await this.db.query<QueueConfig>({
             q: `SELECT * FROM ${this.escapedSchemaName}.queue_config WHERE queue_name = $1`,
             args: [this.queueName]
         });
@@ -26,23 +26,40 @@ export class PgQueueConfig implements IPgQueueConfig {
 
     }
 
-    async set(config:Omit<QueueConfigDbUpdate, 'queue_name'>):Promise<{status:'ok'} | {status: 'error'}> {
-        const _config = config as QueueConfigDbUpdate;
+    async set(config:Partial<QueueConfigCore>):Promise<{status:'ok'} | {status: 'error'}> {
+        const _config = config;
 
+        await this.db.query({
+            q: `SELECT ${this.escapedSchemaName}.update_queue_config($1, $2, $3, $4, $5)`,
+            args: [
+                this.queueName,
+                _config.max_concurrency ?? null,
+                _config.pause_between_retries_milliseconds ?? null,
+                _config.timeout_milliseconds ?? null,
+                _config.timeout_with_result ?? null
+            ]
+        });
+
+        
+        return {status: 'ok'};
+    }
+
+    async setEndpoint(active:boolean):Promise<{status:'ok'} | {status: 'error'}>;
+    async setEndpoint(active:boolean, config?:Partial<QueueConfigActiveDetails>):Promise<{status:'ok'} | {status: 'error'}> {
         await this.db.query({
             q: `SELECT ${this.escapedSchemaName}.update_queue_config($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
             args: [
                 this.queueName,
-                _config.max_concurrency,
-                _config.pause_between_retries_milliseconds,
-                _config.timeout_milliseconds,
-                _config.timeout_with_result,
-                _config.endpoint_active,
-                _config.endpoint_method ?? null,
-                _config.endpoint_bearer_token_location ?? null,
-                _config.endpoint_url ?? null,
-                _config.endpoint_timeout_milliseconds ?? null,
-                _config.endpoint_manual_release ?? null,
+                null,
+                null,
+                null,
+                null,
+                active,
+                config?.endpoint_method ?? null,
+                config?.endpoint_bearer_token_location ?? null,
+                config?.endpoint_url ?? null,
+                config?.endpoint_timeout_milliseconds ?? null,
+                config?.endpoint_manual_release ?? null,
             ]
         });
 

@@ -8,6 +8,9 @@
 -- ####################
 -- QUEUE_CONFIG :: TABLE
 
+SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'endpoint_method', ARRAY['GET', 'POST']);
+SELECT "pgq_schema_placeholder".create_enum_type_if_not_exists('pgq_schema_placeholder', 'endpoint_bearer_token_location_type', ARRAY['', 'supabase_vault', 'inline']);
+
 CREATE TABLE IF NOT EXISTS "pgq_schema_placeholder".queue_config (
     queue_config_id serial PRIMARY KEY,
     queue_name TEXT NOT NULL UNIQUE,
@@ -15,13 +18,13 @@ CREATE TABLE IF NOT EXISTS "pgq_schema_placeholder".queue_config (
     pause_between_retries_milliseconds INT NOT NULL DEFAULT 30000,
     timeout_milliseconds INT NOT NULL DEFAULT 30000,
     endpoint_active BOOLEAN NOT NULL DEFAULT FALSE,
-    endpoint_method "pgq_schema_placeholder".endpoint_method DEFAULT NULL,
-    endpoint_bearer_token_location "pgq_schema_placeholder".endpoint_bearer_token_location_type DEFAULT '',
+    endpoint_method "pgq_schema_placeholder".endpoint_method NOT NULL DEFAULT 'POST',
+    endpoint_bearer_token_location "pgq_schema_placeholder".endpoint_bearer_token_location_type NOT NULL DEFAULT '',
     endpoint_bearer_token_supabase_vault_key UUID DEFAULT NULL,
-    endpoint_bearer_token_inline_value TEXT DEFAULT '',
-    endpoint_url TEXT DEFAULT NULL, 
-    endpoint_timeout_milliseconds INT CHECK(timeout_milliseconds > 50 AND timeout_milliseconds < 600000) DEFAULT NULL, -- Less than 10 minutes
-    endpoint_manual_release BOOLEAN DEFAULT NULL,
+    endpoint_bearer_token_inline_value TEXT NOT NULL DEFAULT '',
+    endpoint_url TEXT NOT NULL DEFAULT '', 
+    endpoint_timeout_milliseconds INT CHECK(timeout_milliseconds > 50 AND timeout_milliseconds < 600000) NOT NULL DEFAULT 30000, -- Less than 10 minutes
+    endpoint_manual_release BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT check_endpoint_columns 

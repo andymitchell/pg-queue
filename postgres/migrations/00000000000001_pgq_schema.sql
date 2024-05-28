@@ -76,6 +76,55 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".get_table_defaults(p_table_name TEXT, p_schema_name TEXT DEFAULT 'pgq_schema_placeholder')
+RETURNS JSONB AS $$
+DECLARE
+    result JSONB := '{}';
+    column_name TEXT;
+    column_default TEXT;
+BEGIN
+    FOR column_name, column_default IN
+        SELECT 
+            a.attname AS column_name, 
+            pg_get_expr(d.adbin, d.adrelid) AS column_default
+        FROM 
+            pg_attribute a 
+        LEFT JOIN 
+            pg_attrdef d ON a.attnum = d.adnum AND a.attrelid = d.adrelid 
+        WHERE 
+            a.attnum > 0 
+            AND NOT a.attisdropped 
+            AND a.attrelid = (
+                SELECT oid 
+                FROM pg_class 
+                WHERE relname = p_table_name 
+                AND relnamespace = (
+                    SELECT oid 
+                    FROM pg_namespace 
+                    WHERE nspname = p_schema_name
+                )
+            )
+    LOOP
+        -- Remove the cast from the default value
+        column_default := regexp_replace(column_default, '::.*', '');
+
+        -- Skip default values that are functions
+        IF column_default ~ '^\w+\([^)]*\)?$' THEN
+            CONTINUE;
+        END IF;
+
+        -- Remove single quotes from string default values
+        column_default := regexp_replace(column_default, '''(.*)''', '\1', 'g');
+
+        -- Ensure default values are converted to appropriate types for JSON
+        IF column_default IS NOT NULL THEN
+            result := jsonb_set(result, ARRAY[column_name], to_jsonb(column_default), true);
+        END IF;
+    END LOOP;
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION "pgq_schema_placeholder".create_type_if_not_exists(p_schema_name text, p_type_name text, p_fields text)
