@@ -34,20 +34,21 @@ describe('Dispatcher', () => {
         const endpoint_url = 'https://fakedomain.com/test_q1';
 
         // Set up the queue config to call and endpoint, as GET
-        const config = {
-            endpoint_active: true,
+        const config:Partial<QueueConfig> = {
             timeout_milliseconds: 30000,
             timeout_with_result: 'complete',
             max_concurrency: 10,
-            pause_between_retries_milliseconds: 100,
+            pause_between_retries_milliseconds: 100
+        };
+        await q.getConfig().set(config);
+        await q.getConfig().setEndpoint(true, {
             endpoint_method: 'POST',
             endpoint_bearer_token_location: 'inline',
             endpoint_bearer_token_inline_value: '',
             endpoint_url,
             endpoint_timeout_milliseconds: 30000,
             endpoint_manual_release: true
-        } as QueueConfig;
-        await q.getConfig().set(config);
+        })
         
 
         // Set an auth key
