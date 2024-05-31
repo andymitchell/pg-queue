@@ -6,9 +6,12 @@ import { install } from "./module";
 import { v4 as uuidv4 } from "uuid";
 import { PgTestable, PgTestableInstance } from '@andyrmitchell/pg-testable';
 import { listMigrationTestFunctions } from "./utils/listMigrationTestFunctions";
-import { packageDirectorySync } from "pkg-dir";
-import { generateUniqueSchema } from "../utils/TestDb";
 
+
+
+export function generateUniqueSchema(): string {
+    return `test_${uuidv4().replace(/\-/g, '')}`;
+}
 
 let dbPglite: PGlite;
 
@@ -150,7 +153,8 @@ describe('migration sql', () => {
 
     test('run tap-compatible tests ok', async () => {
 
-        const dbPgmock: PgTestableInstance<any> = PgTestable.newDb(true, 'pgmock');
+        // TODO pglite will stop breaking throws_ok pgtap test, so swap out pgmock to pglite 0.1.6+ to be much faster: https://github.com/electric-sql/pglite/issues/92
+        const dbPgmock: PgTestableInstance = new PgTestable({type: 'pgmock'});
         const queryablePgmock: Queryable = {
             exec: async (q, tx) => {
                 await (tx ?? dbPgmock).exec(q);
@@ -160,7 +164,7 @@ describe('migration sql', () => {
                 if (tx) {
                     return tx.query(query);
                 } else {
-                    const result = await dbPgmock.query(query.q, query.args);
+                    const result = await dbPgmock.query<any>(query.q, query.args);
                     return result;
                 }
             },

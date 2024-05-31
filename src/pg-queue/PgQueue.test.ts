@@ -2,29 +2,28 @@ import { sleep } from "@andyrmitchell/utils";
 import { sqlFilterReaderNode } from "../install/utils/sqlFileReaderNode"
 import { TestDb } from "../utils/TestDb"
 import { PgQueue } from "./PgQueue";
+import { PgTestable } from "@andyrmitchell/pg-testable";
 
 
 // Keep it cached betweeen tests
-let dbs:TestDb[] = []
+let provider:PgTestable;
 beforeAll(async () => {
-    dbs.push(new TestDb(sqlFilterReaderNode, 'pglite'));
+    provider = new PgTestable({type: 'pglite'});
 })
 afterAll(async () => {
-    for( const db of dbs ) {
-        await db.close();
-    }
+    await provider.dispose();
 })
 
 describe('PgQueue', () => {
 
     test('PgQueue add job', async () => {
-        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+        const db = new TestDb(sqlFilterReaderNode, provider);
 
-        const queue = new PgQueue<{name: string}>(db.db, 'test_q1', db.schema);
+        const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
 
         await queue.addJob({name: 'Bob'});
 
-        const result = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        const result = await db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
         expect(result.rows.length).toBe(1);
 
         
@@ -33,9 +32,9 @@ describe('PgQueue', () => {
     }, 1000*20);
 
     test('PgQueue pick and release job', async () => {
-        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+        const db = new TestDb(sqlFilterReaderNode, provider);
 
-        const queue = new PgQueue<{name: string}>(db.db, 'test_q1', db.schema);
+        const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
 
         await queue.addJob({name: 'Bob'});
 
@@ -45,7 +44,7 @@ describe('PgQueue', () => {
         expect(job.job.payload.name).toBe('Bob');
 
         // Confirm processing in db
-        const result = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        const result = await db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
         expect(result.rows.length).toBe(1);
         expect(result.rows[0]?.status).toBe('processing');
 
@@ -55,7 +54,7 @@ describe('PgQueue', () => {
 
         // Release it
         job.release('complete');
-        const result2 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        const result2 = await db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
         expect(result2.rows.length).toBe(0);
         
         // Pick again - confirm cannot
@@ -66,9 +65,9 @@ describe('PgQueue', () => {
     }, 1000*20);
 
     test('PgQueue pick and fail job', async () => {
-        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+        const db = new TestDb(sqlFilterReaderNode, provider);
 
-        const queue = new PgQueue<{name: string}>(db.db, 'test_q1', db.schema);
+        const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
         queue.getConfig().set({
             pause_between_retries_milliseconds: 100,
             timeout_milliseconds: 30000,
@@ -85,7 +84,7 @@ describe('PgQueue', () => {
 
         // Fail it
         job.release('failed');
-        const result2 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        const result2 = await db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
         expect(result2.rows.length).toBe(1);
 
         // Pick again - confirm cannot

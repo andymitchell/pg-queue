@@ -1,88 +1,83 @@
-import { PgTestable, PgTestableDbs, PgTestableInstance } from "@andyrmitchell/pg-testable";
-import { Queryable } from "../types";
+import { PgTestable, PgTestableInstance, PgTestableVirtual } from "@andyrmitchell/pg-testable";
+import { DbQuery, Queryable } from "../types";
 import { SqlFileReader, install } from "../install/module";
-import { v4 as uuidv4 } from "uuid";
-import { PostgresHelpers, sleep } from "@andyrmitchell/utils";
-
-export function generateUniqueSchema(): string {
-    return `test_${uuidv4().replace(/\-/g, '')}`;
-}
 
 
-type Provider = {type:PgTestableDbs, instance:PgTestableInstance<any>, locks:string[]};
 
-export class TestDb {
 
-    private static providers:Provider[] = []
+
+
+
+export class TestDb implements Queryable {
+
+    
 
     schema: Readonly<string>;
-    db: Readonly<Queryable>;
-
-    private id:string;
-    private type:PgTestableDbs;
-    private provider:Provider;
+    
+    private db:PgTestableVirtual;
+    private provider:PgTestableInstance;
+    private ownsProvider?: boolean;
     private halt:{closed?: boolean};
     private loaded:Promise<void>;
 
-    constructor(reader:SqlFileReader, type:PgTestableDbs = 'pglite', forceFresh?:boolean) {
-        this.id = uuidv4();
-        this.type = type ?? 'pglite';
-        this.schema = generateUniqueSchema();
+    constructor(reader:SqlFileReader, provider?:PgTestableInstance) {
+        
         this.halt = {};
 
-        this.provider = this.getProvider(reader, forceFresh);
+        if( provider ) {
+            this.provider = provider;
+        } else {
+            this.provider = new PgTestable({type: 'pglite'});
+            this.ownsProvider = true;
+        }
+        
+        this.db = new PgTestableVirtual(this.provider);
+        this.schema = this.db.getSchema();
 
         this.loaded = new Promise<void>(async resolve => {
-            const queryableWithoutLoadingHold = makeQueryable(this.provider.instance);
+            const queryableWithoutLoadingHold = makeQueryable(this.db);
             await install(reader, queryableWithoutLoadingHold, {schema_name: this.schema});
             resolve();
         });
-        this.db = makeQueryable(this.provider.instance, this.loaded, this.halt);
+        
     }
-
-    private getProvider(reader:SqlFileReader, forceFresh?:boolean):Provider {
-        let provider = TestDb.providers.find(x => x.type===this.type);
-        const cached = !!provider;
-
-        if( !provider || forceFresh ) {
-            const instance = PgTestable.newDb(undefined, this.type);
-            provider = {instance, type: this.type, locks: [this.id]};
-            if( !cached ) {
-                TestDb.providers.push(provider);
-            }
+    async exec(q: string, transaction?: Queryable | undefined): Promise<void> {
+        if( this.halt?.closed ) throw new Error("Closed");
+        await this.loaded;
+        await (transaction ?? this.db).exec(q);
+    }
+    async query<T extends Record<string, any> = Record<string, any>>(query: DbQuery, transaction?: Queryable | undefined): Promise<{ rows: T[]; }> {
+        if( this.halt?.closed ) throw new Error("Closed");
+        await this.loaded;
+        if( transaction ) {
+            return await transaction.query(query);
         } else {
-            provider.locks.push(this.id);
+            return await this.db.query(query.q, query.args);
         }
-
-        return provider;
     }
 
+    schemaScope(identifier:string):string {
+        return this.db.schemaScope(identifier);
+    }
     
 
     async close() {
         if( this.halt.closed ) return;
         this.halt.closed = true;
 
-        await this.loaded; // Must create schema before dropping
+        await this.loaded; // Must finish creating before dropping
 
-        await this.provider.instance.exec(`DROP SCHEMA ${PostgresHelpers.escapeIdentifier(this.schema)} cascade;`);
+        await this.db.dispose();
 
-        this.provider.locks = this.provider.locks.filter(x => x!==this.id);
-        
-        
-        // Make sure no one else wants to use the cached provider
-        await sleep(300);
-
-        if( this.provider.locks.length===0 ) {
-            TestDb.providers = TestDb.providers.filter(x => x.instance!==this.provider.instance);
-            await this.provider.instance.dispose();
+        if( this.ownsProvider ) {
+            this.provider.dispose();
         }
     }
 
 
 }
 
-function makeQueryable(instance: PgTestableInstance<any>, loadingStatus?:Promise<void>, halt?: {closed?: boolean}):Queryable {
+function makeQueryable(instance: PgTestableInstance, loadingStatus?:Promise<void>, halt?: {closed?: boolean}):Queryable {
     return {
         exec: async (q, transaction) => {
             if( halt?.closed ) throw new Error("Closed");

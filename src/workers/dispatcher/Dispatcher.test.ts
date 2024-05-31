@@ -2,21 +2,19 @@ import fetchMock from 'jest-fetch-mock';
 import { TestDb } from '../../utils/TestDb';
 import { sqlFilterReaderNode } from '../../install/utils/sqlFileReaderNode';
 import { PgQueue } from '../../pg-queue';
-import { QueueConfigActiveEndpointDb } from '../../pg-queue-config';
 import { QueueConfig } from '../../pg-queue-config/types';
 import { Dispatcher } from './Dispatcher';
 import { sleep } from '@andyrmitchell/utils';
+import { PgTestable } from '@andyrmitchell/pg-testable';
 fetchMock.enableMocks(); // CALL BEFORE OTHER IMPORTS
 
 // Keep it cached betweeen tests
-let dbs:TestDb[] = []
+let provider:PgTestable;
 beforeAll(async () => {
-    dbs.push(new TestDb(sqlFilterReaderNode, 'pglite'));
+    provider = new PgTestable({type: 'pglite'});
 })
 afterAll(async () => {
-    for( const db of dbs ) {
-        await db.close();
-    }
+    await provider.dispose();
 })
 
 beforeEach(() => {
@@ -28,9 +26,9 @@ describe('Dispatcher', () => {
 
     test('Dispatcher for queue', async () => {
 
-        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+        const db = new TestDb(sqlFilterReaderNode, provider);
         const queueName = 'test_q1';
-        const q = new PgQueue<{name: string}>(db.db, queueName, db.schema);
+        const q = new PgQueue<{name: string}>(db, queueName, db.schema);
         const endpoint_url = 'https://fakedomain.com/test_q1';
 
         // Set up the queue config to call and endpoint, as GET
@@ -89,7 +87,7 @@ describe('Dispatcher', () => {
         q.addJob({name: 'Bob'});
 
         // Dispatch
-        const dispatcher = new Dispatcher(db.db, 5, db.schema);
+        const dispatcher = new Dispatcher(db, 5, db.schema);
         // TODO Improve: Dispatcher could fire events 
         // TODO Have a way to close it
         // TODO Have a way to verify it's closed

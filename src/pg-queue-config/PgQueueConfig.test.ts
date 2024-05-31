@@ -1,24 +1,23 @@
+import { PgTestable } from "@andyrmitchell/pg-testable";
 import { sqlFilterReaderNode } from "../install/utils/sqlFileReaderNode"
 import { TestDb } from "../utils/TestDb"
 import { PgQueueConfig } from "./PgQueueConfig";
 
 // Keep it cached betweeen tests
-let dbs:TestDb[] = []
+let provider:PgTestable;
 beforeAll(async () => {
-    dbs.push(new TestDb(sqlFilterReaderNode, 'pglite'));
+    provider = new PgTestable({type: 'pglite'});
 })
 afterAll(async () => {
-    for( const db of dbs ) {
-        await db.close();
-    }
+    await provider.dispose();
 })
 
 describe('PgQueueConfig', () => {
 
     test('PgQueueConfig set', async () => {
-        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+        const db = new TestDb(sqlFilterReaderNode, provider);
 
-        const queueConfig = new PgQueueConfig(db.db, 'test_q1', db.schema);
+        const queueConfig = new PgQueueConfig(db, 'test_q1', db.schema);
         await queueConfig.set({
             max_concurrency: 25
         });

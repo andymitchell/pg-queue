@@ -3,17 +3,16 @@ import { sqlFilterReaderNode } from "../install/utils/sqlFileReaderNode";
 
 import { TestDb } from "../utils/TestDb";
 import { MultiStepPgQueue } from "./MultiStepPgQueue";
+import { PgTestable } from "@andyrmitchell/pg-testable";
 
 
 // Keep it cached betweeen tests
-let dbs:TestDb[] = []
+let provider:PgTestable;
 beforeAll(async () => {
-    dbs.push(new TestDb(sqlFilterReaderNode, 'pglite'));
+    provider = new PgTestable({type: 'pglite'});
 })
 afterAll(async () => {
-    for( const db of dbs ) {
-        await db.close();
-    }
+    await provider.dispose();
 })
 
 describe('MultiStepPgQueue', () => {
@@ -21,7 +20,7 @@ describe('MultiStepPgQueue', () => {
 
     test('MultiStepPgQueue basic', async () => {
 
-        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+        const db = new TestDb(sqlFilterReaderNode, provider);
 
         const state: {
             current_step?: {
@@ -35,7 +34,7 @@ describe('MultiStepPgQueue', () => {
         
 
         const msq = new MultiStepPgQueue(
-            db.db, 
+            db,
             queueName,
             [
                 {
@@ -84,7 +83,7 @@ describe('MultiStepPgQueue', () => {
 
     test('MultiStepPgQueue longrunner style', async () => {
 
-        const db = new TestDb(sqlFilterReaderNode, 'pglite');
+        const db = new TestDb(sqlFilterReaderNode, provider);
 
         const state: {
             current_step?: {
@@ -98,7 +97,7 @@ describe('MultiStepPgQueue', () => {
         
 
         const msq = new MultiStepPgQueue(
-            db.db, 
+            db, 
             queueName,
             [
                 {
@@ -122,7 +121,7 @@ describe('MultiStepPgQueue', () => {
             name: 'Alice'
         });
 
-        const resultCount1 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        const resultCount1 = await db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
         expect(resultCount1.rows.length).toBe(2);
         expect(resultCount1.rows[0]!.payload.name).toBe('Bob');
         expect(resultCount1.rows[1]!.payload.name).toBe('Alice');
@@ -131,13 +130,13 @@ describe('MultiStepPgQueue', () => {
         expect(result1.status).toBe('ok'); if( result1.status!=='ok') throw new Error("noop - typeguard");
         expect(result1.had_job).toBe(true);
 
-        const resultCount2 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        const resultCount2 = await db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
         expect(resultCount2.rows.length).toBe(1);
 
         const result2 = await msq.processNextJob();
         expect(result2.status).toBe('ok'); if( result2.status!=='ok') throw new Error("noop - typeguard");
         
-        const resultCount3 = await db.db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
+        const resultCount3 = await db.query({q: `SELECT * FROM ${db.schema}.job_queue`, args: []});
         expect(resultCount3.rows.length).toBe(0);
 
         const result3 = await msq.processNextJob();
