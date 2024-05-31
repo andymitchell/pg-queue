@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { pgqFileReaderNode } from "../utils/pgqFileReaderNode";
 import { cli } from "./cli";
 import { UserInputNode } from "./utils/user-input/UserInputNode";

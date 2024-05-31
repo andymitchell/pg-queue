@@ -44,6 +44,9 @@ This library is designed to eliminate all sources of dev ops or maintenance head
 1. In Terminal, navigate to the root of your code (if you have an existing package.json, or existing sql migration files, the root should include both of these).
 2. `npm i @andyrmitchell/pg-queue@latest`
 3. `npx pg-queue-install`
+    - It will ask if you want to use a custom schema in Postgres (otherwise it'll add to the schema in the exported const DEFAULT_SCHEMA)
+    - It will ask you which folders you want to add .sql files to
+
 
 #### Installing via a live Postgres connection from a TypeScript environment
 

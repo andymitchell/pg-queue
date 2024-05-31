@@ -19,6 +19,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "pg-queue-install": "dist/install_cli.mjs"
+  },
   "type": "commonjs",
   "files": [
     "dist",
