@@ -1,6 +1,6 @@
 TRADITIONAL QUEUES VS. SERVERLESS VS SERVERLESS + INNGEST'S FUNCTION MODEL
 
-'Funcky' is really just the smallest interpretation of Inngest possible, to get a better feel for it. And understand how it might be implemented by us (but Inngest can be self hosted, overcoming data 3rd party fears, so that doesn't make sense right now. But it's good know we _could_ do it, as an escape hatch.)
+'Funcky' - this proposal's code name - is really just the smallest interpretation of Inngest possible, to get a better feel for it. And understand how it might be implemented by us (but Inngest can be self hosted, overcoming data 3rd party fears, so that doesn't make sense right now. But it's good know we _could_ do it, as an escape hatch.)
 
 
 # WHAT IS ADVANTAGEOUS VS. A REGULAR QUEUE
