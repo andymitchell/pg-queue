@@ -1,6 +1,6 @@
 import { PgTestable, PgTestableInstance, PgTestableVirtual } from "@andyrmitchell/pg-testable";
 import { DbQuery, Queryable } from "../types";
-import { SqlFileReader, install } from "../install/module";
+import { PgqFileReader, install } from "../install/module";
 
 
 
@@ -20,7 +20,7 @@ export class TestDb implements Queryable {
     private halt:{closed?: boolean};
     private loaded:Promise<void>;
 
-    constructor(reader:SqlFileReader, provider?:PgTestableInstance) {
+    constructor(reader:PgqFileReader, provider?:PgTestableInstance) {
         
         this.halt = {};
 

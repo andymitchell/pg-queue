@@ -1,22 +1,22 @@
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER, Queryable } from "../../types";
 
 
-import { SqlFileReader } from "../types";
+import { PgqFileReader } from "../types";
 import { listMigrationFiles } from "../utils/listMigrationFiles";
 
 type Config = {
     schema_name?: string,
-    include_replaced_migration_files?: boolean
+    testing_include_replaced_migration_files?: boolean
 }
 const DEFAULT_CONFIG:Required<Config> = {
     schema_name: DEFAULT_SCHEMA,
-    include_replaced_migration_files: false
+    testing_include_replaced_migration_files: false
 }
 
-export async function install(reader:SqlFileReader, db:Queryable, config?:Config) {
+export async function install(reader:PgqFileReader, db:Queryable, config?:Config) {
     const fullConfig:Required<Config> = Object.assign({}, DEFAULT_CONFIG, config);
 
-    let migrationFiles = (await listMigrationFiles(reader, undefined, undefined, fullConfig.include_replaced_migration_files)).map(x => x.uri);
+    let migrationFiles = (await listMigrationFiles(reader, undefined, undefined, fullConfig.testing_include_replaced_migration_files)).map(x => x.uri);
 
     if( migrationFiles.length===0 ) {
         throw new Error("No migrations found");

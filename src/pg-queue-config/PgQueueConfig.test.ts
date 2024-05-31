@@ -1,5 +1,5 @@
 import { PgTestable } from "@andyrmitchell/pg-testable";
-import { sqlFilterReaderNode } from "../install/utils/sqlFileReaderNode"
+import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode"
 import { TestDb } from "../utils/TestDb"
 import { PgQueueConfig } from "./PgQueueConfig";
 
@@ -15,7 +15,7 @@ afterAll(async () => {
 describe('PgQueueConfig', () => {
 
     test('PgQueueConfig set', async () => {
-        const db = new TestDb(sqlFilterReaderNode, provider);
+        const db = new TestDb(pgqFileReaderNode, provider);
 
         const queueConfig = new PgQueueConfig(db, 'test_q1', db.schema);
         await queueConfig.set({

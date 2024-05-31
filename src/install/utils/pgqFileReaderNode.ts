@@ -1,34 +1,34 @@
-import { SqlFileReader } from "../types";
+import { PgqFileReader } from "../types";
 import { promises as fs } from 'fs';
 import { stripTrailingSlash } from "./stripTrailingSlash";
 
-export const sqlFilterReaderNode:SqlFileReader = {
-    async read(absolutePathToSql) {
+export const pgqFileReaderNode:PgqFileReader = {
+    async read(absolutePath) {
         try {
-            const content = await fs.readFile(absolutePathToSql, 'utf-8');
+            const content = await fs.readFile(absolutePath, 'utf-8');
             return content;
         } catch(e) {
-            console.warn(`Error reading file: ${absolutePathToSql}`);
+            console.warn(`Error reading file: ${absolutePath}`);
             return undefined;
         }
     },
-    async write(absolutePathToSql, content, append, appendingSeparatorOnlyIfFileExists?:string) {
+    async write(absolutePath, content, append, appendingSeparatorOnlyIfFileExists?:string) {
         if (append) {
-            const hasFile = await sqlFilterReaderNode.has_file(absolutePathToSql);
+            const hasFile = await pgqFileReaderNode.has_file(absolutePath);
             if( hasFile && appendingSeparatorOnlyIfFileExists ) content = `${appendingSeparatorOnlyIfFileExists}${content}`
-            await fs.appendFile(absolutePathToSql, content);
+            await fs.appendFile(absolutePath, content);
         } else {
-            await fs.writeFile(absolutePathToSql, content);
+            await fs.writeFile(absolutePath, content);
         }
     },
     async copy_file(source, destination) {
         await fs.copyFile(source, destination);
     },
-    async list_files(absolutePathToSqlDirectory, includeAbsoluteDirectory) {
-        let files = await fs.readdir(absolutePathToSqlDirectory);
+    async list_files(absolutePathDirectory, includeAbsoluteDirectory) {
+        let files = await fs.readdir(absolutePathDirectory);
         if( includeAbsoluteDirectory ) {
-            absolutePathToSqlDirectory = stripTrailingSlash(absolutePathToSqlDirectory);
-            files = files.map(file => `${absolutePathToSqlDirectory}/${file}`);
+            absolutePathDirectory = stripTrailingSlash(absolutePathDirectory);
+            files = files.map(file => `${absolutePathDirectory}/${file}`);
         }
         return files;
     },
@@ -36,7 +36,7 @@ export const sqlFilterReaderNode:SqlFileReader = {
         await fs.mkdir(absolutePathToDirectory, {recursive: true});
     },
     async remove_directory(absolutePathToDirectory, force) {
-        if( !await sqlFilterReaderNode.has_directory(absolutePathToDirectory) ) return;
+        if( !await pgqFileReaderNode.has_directory(absolutePathToDirectory) ) return;
 
         const files = await fs.readdir(absolutePathToDirectory, {'recursive': true});
         if (files.length === 0 && !force) {
@@ -51,12 +51,12 @@ export const sqlFilterReaderNode:SqlFileReader = {
         }
     },
     async remove_file(absolutePathToFile) {
-        if( !await sqlFilterReaderNode.has_file(absolutePathToFile) ) return;
+        if( !await pgqFileReaderNode.has_file(absolutePathToFile) ) return;
         await fs.rm(absolutePathToFile);
     },
-    async has_directory(absolutePathToSqlDirectory) {
+    async has_directory(absolutePathDirectory) {
         try {
-            const stat = await fs.stat(absolutePathToSqlDirectory);
+            const stat = await fs.stat(absolutePathDirectory);
             return stat.isDirectory();
         } catch (error) {
             // If an error occurs, it means the path does not exist or is not accessible

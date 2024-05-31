@@ -1,10 +1,13 @@
 import { install } from "./install"
-import { SqlFileReader } from "../types"
+import { PgqFileReader } from "../types"
+import {pgqFileReaderNode} from '../utils/pgqFileReaderNode';
+
 
 export {
-    install
+    install,
+    pgqFileReaderNode
 }
 
 export {
-    SqlFileReader
+    PgqFileReader
 }

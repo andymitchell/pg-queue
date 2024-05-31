@@ -1,5 +1,5 @@
 import { sleep } from "@andyrmitchell/utils";
-import { sqlFilterReaderNode } from "../install/utils/sqlFileReaderNode"
+import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode"
 import { TestDb } from "../utils/TestDb"
 import { PgQueue } from "./PgQueue";
 import { PgTestable } from "@andyrmitchell/pg-testable";
@@ -17,7 +17,7 @@ afterAll(async () => {
 describe('PgQueue', () => {
 
     test('PgQueue add job', async () => {
-        const db = new TestDb(sqlFilterReaderNode, provider);
+        const db = new TestDb(pgqFileReaderNode, provider);
 
         const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
 
@@ -32,7 +32,7 @@ describe('PgQueue', () => {
     }, 1000*20);
 
     test('PgQueue pick and release job', async () => {
-        const db = new TestDb(sqlFilterReaderNode, provider);
+        const db = new TestDb(pgqFileReaderNode, provider);
 
         const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
 
@@ -65,7 +65,7 @@ describe('PgQueue', () => {
     }, 1000*20);
 
     test('PgQueue pick and fail job', async () => {
-        const db = new TestDb(sqlFilterReaderNode, provider);
+        const db = new TestDb(pgqFileReaderNode, provider);
 
         const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
         queue.getConfig().set({

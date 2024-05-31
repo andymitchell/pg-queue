@@ -2,7 +2,7 @@
 import { listSubDirectories } from './utils/listSubDirectories';
 import { getCurrentDirectory } from './utils/getCurrentDirectory';
 import { IUserInput, QuestionChoice } from './utils/user-input/types';
-import { SqlFileReader } from '../types';
+import { PgqFileReader } from '../types';
 import { stripTrailingSlash } from '../utils/stripTrailingSlash';
 import { compileMigrationFileName, listMigrationFiles } from '../utils/listMigrationFiles';
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER } from '../../types';
@@ -10,7 +10,7 @@ import {  listMigrationTestFunctions } from '../utils/listMigrationTestFunctions
 
 
 
-async function copyMigrations(reader:SqlFileReader, absoluteDestinationPath: string, schema: string): Promise<void> {
+async function copyMigrations(reader:PgqFileReader, absoluteDestinationPath: string, schema: string): Promise<void> {
 
     absoluteDestinationPath = stripTrailingSlash(absoluteDestinationPath);
 
@@ -68,7 +68,7 @@ async function copyMigrations(reader:SqlFileReader, absoluteDestinationPath: str
     console.log(`${successCount} migration files delivered to destination ${absoluteDestinationPath}`);
 }
 
-async function copyTests(reader:SqlFileReader, absoluteDestinationPath: string, schema: string): Promise<void> {
+async function copyTests(reader:PgqFileReader, absoluteDestinationPath: string, schema: string): Promise<void> {
 
     absoluteDestinationPath = stripTrailingSlash(absoluteDestinationPath);
 
@@ -106,7 +106,7 @@ ROLLBACK;
 
 }
 
-async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:SqlFileReader, currentDirectory:string, name: string, message:string, suggestedDirs:string[]) {
+async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:PgqFileReader, currentDirectory:string, name: string, message:string, suggestedDirs:string[]) {
     const chosenDir = await userInput.ask({
         type: suggestedDirs.length? 'list' : 'input',
         name,
@@ -146,7 +146,7 @@ async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:SqlFileR
     return chosenDir;
 }
 
-export async function cli(userInput:IUserInput, sqlFileReader:SqlFileReader) {
+export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
     let currentDirectory = await getCurrentDirectory();
     
     currentDirectory = stripTrailingSlash(currentDirectory);

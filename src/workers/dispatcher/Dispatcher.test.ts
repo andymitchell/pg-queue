@@ -1,6 +1,6 @@
 import fetchMock from 'jest-fetch-mock';
 import { TestDb } from '../../utils/TestDb';
-import { sqlFilterReaderNode } from '../../install/utils/sqlFileReaderNode';
+import { pgqFileReaderNode } from '../../install/utils/pgqFileReaderNode';
 import { PgQueue } from '../../pg-queue';
 import { QueueConfig } from '../../pg-queue-config/types';
 import { Dispatcher } from './Dispatcher';
@@ -26,7 +26,7 @@ describe('Dispatcher', () => {
 
     test('Dispatcher for queue', async () => {
 
-        const db = new TestDb(sqlFilterReaderNode, provider);
+        const db = new TestDb(pgqFileReaderNode, provider);
         const queueName = 'test_q1';
         const q = new PgQueue<{name: string}>(db, queueName, db.schema);
         const endpoint_url = 'https://fakedomain.com/test_q1';

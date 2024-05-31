@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
-import { SqlFileReader } from "./types";
+import { PgqFileReader } from "./types";
 import { Queryable } from "../types";
-import { sqlFilterReaderNode } from "./utils/sqlFileReaderNode";
+import { pgqFileReaderNode } from "./utils/pgqFileReaderNode";
 import { install } from "./module";
 import { v4 as uuidv4 } from "uuid";
 import { PgTestable, PgTestableInstance } from '@andyrmitchell/pg-testable';
@@ -15,13 +15,13 @@ export function generateUniqueSchema(): string {
 
 let dbPglite: PGlite;
 
-let reader: SqlFileReader;
+let reader: PgqFileReader;
 let queryablePglite: Queryable;
 
 beforeAll(async () => {
     dbPglite = new PGlite();
 
-    reader = sqlFilterReaderNode;
+    reader = pgqFileReaderNode;
 
     queryablePglite = {
         exec: async (q, tx) => {
@@ -120,7 +120,7 @@ describe('migration sql', () => {
         try {
             await install(reader, queryablePglite, {
                 ...config,
-                include_replaced_migration_files: true
+                testing_include_replaced_migration_files: true
             });
         } catch (e) {
             error_run2 = true;

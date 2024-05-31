@@ -1,11 +1,11 @@
-import { sqlFilterReaderNode } from "../utils/sqlFileReaderNode";
+import { pgqFileReaderNode } from "../utils/pgqFileReaderNode";
 import { cli } from "./cli";
 import { UserInputNode } from "./utils/user-input/UserInputNode";
 
 async function main() {
     const userInput = new UserInputNode();
 
-    cli(userInput, sqlFilterReaderNode)
+    cli(userInput, pgqFileReaderNode)
     
 }
 

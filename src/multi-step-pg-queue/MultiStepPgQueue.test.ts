@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sqlFilterReaderNode } from "../install/utils/sqlFileReaderNode";
+import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode";
 
 import { TestDb } from "../utils/TestDb";
 import { MultiStepPgQueue } from "./MultiStepPgQueue";
@@ -20,7 +20,7 @@ describe('MultiStepPgQueue', () => {
 
     test('MultiStepPgQueue basic', async () => {
 
-        const db = new TestDb(sqlFilterReaderNode, provider);
+        const db = new TestDb(pgqFileReaderNode, provider);
 
         const state: {
             current_step?: {
@@ -83,7 +83,7 @@ describe('MultiStepPgQueue', () => {
 
     test('MultiStepPgQueue longrunner style', async () => {
 
-        const db = new TestDb(sqlFilterReaderNode, provider);
+        const db = new TestDb(pgqFileReaderNode, provider);
 
         const state: {
             current_step?: {

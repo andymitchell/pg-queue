@@ -1,5 +1,5 @@
 import { packageDirectorySync } from "pkg-dir";
-import { SqlFileReader } from "../types";
+import { PgqFileReader } from "../types";
 import { stripTrailingSlash } from "./stripTrailingSlash";
 import filenamify from 'filenamify';
 
@@ -17,7 +17,7 @@ export type SqlFile = {
 
 const SCHEMA_SEPERATOR = filenamify('__$');
 
-export async function listMigrationFiles(reader:SqlFileReader, sourcePath = `${packageDirectorySync()}/postgres/migrations`, filterSchema?: string, includeReplaced?: boolean):Promise<SqlFile[]> {
+export async function listMigrationFiles(reader:PgqFileReader, sourcePath = `${packageDirectorySync()}/postgres/migrations`, filterSchema?: string, includeReplaced?: boolean):Promise<SqlFile[]> {
     
     sourcePath = stripTrailingSlash(sourcePath);
 
@@ -65,7 +65,7 @@ function padZero(number:number, maxLength:number) {
     return number.toString().padStart(maxLength, '0');
 }
 
-export async function compileMigrationFileName(reader:SqlFileReader, path:string, file_sans_timestamp_and_schema:string, schema:string):Promise<{uri:string, file:string}> {
+export async function compileMigrationFileName(reader:PgqFileReader, path:string, file_sans_timestamp_and_schema:string, schema:string):Promise<{uri:string, file:string}> {
     // Prepare vars
     path = stripTrailingSlash(path);
     file_sans_timestamp_and_schema = file_sans_timestamp_and_schema.replace(/\.sql$/i, '');

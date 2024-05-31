@@ -1,12 +1,12 @@
 import { PgTestable } from "@andyrmitchell/pg-testable";
-import { sqlFilterReaderNode } from "../install/utils/sqlFileReaderNode";
+import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode";
 import { TestDb } from "./TestDb";
 
 describe('TestDb', () => {
 
 
     test('basic TestDb with pglite', async () => {
-        const tester = new TestDb(sqlFilterReaderNode);
+        const tester = new TestDb(pgqFileReaderNode);
         const result = await tester.query({
             q: `SELECT * FROM ${tester.schema}.job_queue`,
             args: []
@@ -17,8 +17,8 @@ describe('TestDb', () => {
 
     test('reuses cache in TestDb with pglite', async () => {
         const provider = new PgTestable({type: 'pglite'});
-        const tester1 = new TestDb(sqlFilterReaderNode, provider);
-        const tester2 = new TestDb(sqlFilterReaderNode, provider);
+        const tester1 = new TestDb(pgqFileReaderNode, provider);
+        const tester2 = new TestDb(pgqFileReaderNode, provider);
 
 
         expect(tester1.schema===tester2.schema).toBe(false);
@@ -36,7 +36,7 @@ describe('TestDb', () => {
 
 
     test('after close, nothing can query', async () => {
-        const tester1 = new TestDb(sqlFilterReaderNode);
+        const tester1 = new TestDb(pgqFileReaderNode);
 
         await tester1.close();
 
@@ -56,8 +56,8 @@ describe('TestDb', () => {
 
     test('closing 1 does not kill another', async () => {
         const provider = new PgTestable({type: 'pglite'});
-        const tester1 = new TestDb(sqlFilterReaderNode, provider);
-        const tester2 = new TestDb(sqlFilterReaderNode, provider);
+        const tester1 = new TestDb(pgqFileReaderNode, provider);
+        const tester2 = new TestDb(pgqFileReaderNode, provider);
 
         await tester2.close();
 
