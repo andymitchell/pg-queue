@@ -2,8 +2,9 @@ import { z } from "zod";
 import { PgqFileReader, install, pgqFileReaderNode } from "./install/module";
 import { MultiStepPgQueue } from "./multi-step-pg-queue";
 import { JobQueueReleaseTypes, PgQueue, pgqc } from "./pg-queue";
-import { DEFAULT_SCHEMA, Queryable } from "./types";
+import { DEFAULT_SCHEMA, DbQuery, Queryable } from "./types";
 import { PostgresDb } from "./utils/PostgresDb";
+import { PgQueueConfig } from "./pg-queue-config";
 
 export {
     install,
@@ -15,6 +16,7 @@ export {
 export {
     PgQueue,
     MultiStepPgQueue,
+    PgQueueConfig,
     pgqc
 }
 
@@ -26,6 +28,7 @@ export {
 export type {
     PgqFileReader,
     Queryable,
+    DbQuery,
     JobQueueReleaseTypes
 }
 
