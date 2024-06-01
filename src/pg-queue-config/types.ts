@@ -5,7 +5,9 @@ export interface IPgQueueConfig {
     getQueueEndPointApiKey():Promise<string | undefined>;
     setQueueEndPointApiKey(apiKey:string):Promise<void>;
     set(config:Partial<QueueConfigCore>):Promise<{status:'ok'} | {status: 'error'}>;
-    setEndpoint(active:boolean):Promise<{status:'ok'} | {status: 'error'}>;
+
+    setEndpoint(active:false):Promise<{status:'ok'} | {status: 'error'}>;
+    setEndpoint(active:true, config:Partial<QueueConfigActiveDetails>):Promise<{status:'ok'} | {status: 'error'}>;
     setEndpoint(active:boolean, config?:Partial<QueueConfigActiveDetails>):Promise<{status:'ok'} | {status: 'error'}>;
 }
 

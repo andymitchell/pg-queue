@@ -2,6 +2,7 @@ import { PgTestable } from "@andyrmitchell/pg-testable";
 import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode"
 import { TestDb } from "../utils/TestDb"
 import { PgQueueConfig } from "./PgQueueConfig";
+import { IPgQueueConfig } from "./types";
 
 // Keep it cached betweeen tests
 let provider:PgTestable;
@@ -24,6 +25,8 @@ describe('PgQueueConfig', () => {
 
         const configObj = await queueConfig.get();
         expect(configObj?.max_concurrency).toBe(25);
+
+        
 
     })
 

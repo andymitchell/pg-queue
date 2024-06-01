@@ -44,7 +44,8 @@ export class PgQueueConfig implements IPgQueueConfig {
         return {status: 'ok'};
     }
 
-    async setEndpoint(active:boolean):Promise<{status:'ok'} | {status: 'error'}>;
+    setEndpoint(active:false):Promise<{status:'ok'} | {status: 'error'}>;
+    setEndpoint(active:true, config:Partial<QueueConfigActiveDetails>):Promise<{status:'ok'} | {status: 'error'}>;
     async setEndpoint(active:boolean, config?:Partial<QueueConfigActiveDetails>):Promise<{status:'ok'} | {status: 'error'}> {
         await this.db.query({
             q: `SELECT ${this.escapedSchemaName}.update_queue_config($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
