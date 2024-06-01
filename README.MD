@@ -57,6 +57,7 @@ This library is designed to eliminate all sources of dev ops or maintenance head
         - It comes with a Queryable for TypeScript/postgres that uses 'postgres' (from npm): `PostgresDb`
     - If you don't provide a schema_name, it'll use the exported const DEFAULT_SCHEMA
 
+
 #### Testing
 
 As every Postgres installation is unique, you should have test scripts on your production server that confirm the queue works as expected.
@@ -136,11 +137,11 @@ You need to set up a Dispatcher, which continually picks available jobs off the 
 
 ##### Serverless Function Dispatcher
 
-[See](`https://www.github.com/andymitchell/pg-queue/blob/src/workers/dispatcher/examples/endpoint-poll.example.ts`)
+[See](https://www.github.com/andymitchell/pg-queue/blob/src/workers/dispatcher/examples/endpoint-poll.example.ts)
 
 ##### Long-running Dispatcher
 
-[See](`https://www.github.com/andymitchell/pg-queue/blob/src/workers/dispatcher/examples/longrunning.example.ts`)
+[See](https://www.github.com/andymitchell/pg-queue/blob/src/workers/dispatcher/examples/longrunning.example.ts)
 
 
 ##### Postgres Native Dispatcher
@@ -153,12 +154,11 @@ This removes the need for a separate Dispatcher, by letting Postgres run it inte
 
 ##### For a queue
 
-[See](`https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/endpoint-queue.example.ts`)
-
+[See](https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/endpoint-queue.example.ts)
 
 ##### For a multi-step workflow
 
-[See](`https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/endpoint-multi-step-queue.example.ts`)
+[See](https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/endpoint-multi-step-queue.example.ts)
 
 
 ### A long-running worker 
@@ -167,11 +167,11 @@ These continually loop, trying to pick a job off the queue and completing it.
 
 #### For a queue 
 
-[See](`https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/longrunning-queue.example.ts`)
+[See](https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/longrunning-queue.example.ts)
 
 #### For a multi-step workflow
 
-[See](`https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/longrunning-multi-step-queue.example.ts`)
+[See](https://www.github.com/andymitchell/pg-queue/blob/src/workers/examples/longrunning-multi-step-queue.example.ts)
 
 
 
@@ -191,13 +191,31 @@ There are many appealing options:
 With the exception of Pg-Boss, all of these require either a cloud package or a dedicated server deployment in a specific language. I.e. there's either cost in maintenance (self hosting an esoteric system) or cloud (subscriptions, and data location concerns for privacy laws). 
 
 Pg-Boss solved those issues, but still lacked: 
-- Pushing jobs to serverless handlers. (Instead, you maintain/scale a fleet of long-running workers.)
-- Language independence - it's written in Node, rather than being primarily in Postgres. 
+- Can run in a serverless environment (e.g. Supabase). Instead, you must set up a fleet of long-running workers. 
 - Simplifying multi-step workflows, by replacing spaghetti-ish job spawning with a single array of functions. 
-- TypeScript source code
+- Language independence - it's written in Node, rather than being primarily in Postgres. 
+- TypeScript source code. Instead, it's plain Javascript and CommonJS.
 
 
-     
+
+## Troubleshooting
+
+### Slow TypeScript or "Type instantiation is excessively deep and possibly infinite." error
+
+This is related to Zod, and probably MultiStepPgQueue's inference of type from a passed in schema. 
+
+Possible Causes:
+- You use a different version of Zod to create the schema, than this package uses to infer a type from the schema
+    - To help you test it, this package exports the Zod it uses. Try using that version to generate you schema, and see if it fixes it. 
+    - In Deno, even if your Zod uses the same _version_ as this package, you must also import from the same registry (i.e. not deno.land)
+        - Use `import z from "npm:zod"` when creating schemas
+- Zod inference requires TypeScript in strict mode
+    - This package is fully in strict mode, and that should be sufficient. But just in case, your consumer code should also be strict (it's good practice anyway!).
+
+Code Tags
+- #ZOD_SCHEMA_COMPATIBILITY
+
+
 
 ## Scaling
 
@@ -252,6 +270,14 @@ In pursuit of transparency, some of the issues you might face:
 
 I paused development because at the time, pg_net wasn't mature enough to use with local testing development. It has since been updated.
 
+### Little Bits
+
+- A queue can only use supabase-vault if supabase installed
+- Switch pgmock for pglite in tests, when pglite fixes the throw_ok error (see TODO in migration.test.ts)
+- Postgres tests can just be flattened, using testhelpers_ by default, but can be converted to PgTap if needed in CLI. 
+- MultiStep passes in old function handler arrays, to continue to support them for jobs that started on that function set.
+
+
 ### Review the latest ideas
 - Postgres queues
     - https://news.ycombinator.com/item?id=40077233
@@ -263,13 +289,18 @@ I paused development because at the time, pg_net wasn't mature enough to use wit
     - https://news.ycombinator.com/item?id=39041477 
     - https://news.ycombinator.com/item?id=39813660
     - https://news.ycombinator.com/item?id=29220338
+    
+    
 
 ### Gain visibility into execution
+
 The main pain points:
 - Are jobs routinely failing, especially if it's a (broken) step in a workflow (alarm, restart)
     - Why is a job routinely failing? What is its history of attempts? What happened to the worker?
 - Are jobs very slow to start (alarm)
 - Is back pressure threatening to collapse the system (alarm / 429 the incoming requests)
+
+Also, make restarting a failed job trivial. 
 
 #### Support 3rd party observability
 Plug in logging systems. Most likely they'll want to subscribe/listen to all activity on the queue, but it could be done imperatively by the TypeScript classes too. 
@@ -313,6 +344,12 @@ This is achieved when the above Roadmap items are complete
 
 
 ### Optimise Postgres
+
+The current system of moving jobs between tables, logging, etc. is too heavy. 
+
+Other ideas
+- Make archiving the working table a batch process
+- Only log (don't have a complete/fail table)? Or keep current tables but make logging optional?
 
 ## Build 
 

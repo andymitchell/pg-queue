@@ -6,6 +6,8 @@ export async function main() {
 
     const queue = new PgQueue(db, 'test_q1');
 
+    
+
     while(true) {
         const result = await queue.pickNextJob();
         if( result ) {

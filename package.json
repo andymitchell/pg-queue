@@ -1,6 +1,6 @@
 {
   "name": "@andyrmitchell/pg-queue",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "exports": {
     ".": {
@@ -20,7 +20,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "pg-queue-install": "dist/install_cli.mjs"
+    "pg-queue-install": "dist/install_cli.mjsnpm"
   },
   "type": "commonjs",
   "files": [
@@ -59,7 +59,7 @@
     "openai": "^4.47.1",
     "ts-jest": "^29.1.2",
     "tsup": "^8.0.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "@andyrmitchell/utils": "^0.4.0",
