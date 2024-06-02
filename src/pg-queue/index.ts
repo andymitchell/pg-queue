@@ -1,15 +1,16 @@
 import { PgQueue } from "./PgQueue"
-import { IPgQueue, JobQueueDb, JobQueueReleaseTypes, isJobQueueDb } from "./types"
+import { IPgQueue, PgQueueJob, PgQueueJobReleaseTypes, isPgQueueJob, makePgQueueJobSchema } from "./types"
 import * as pgqc from './consumers';
 
 export {
     PgQueue,
     pgqc,
-    isJobQueueDb
+    isPgQueueJob,
+    makePgQueueJobSchema
 }
 
 export type {
     IPgQueue,
-    JobQueueReleaseTypes,
-    JobQueueDb
+    PgQueueJobReleaseTypes,
+    PgQueueJob
 }

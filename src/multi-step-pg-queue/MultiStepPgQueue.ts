@@ -1,6 +1,6 @@
 import {  AddJobOptions, DEFAULT_SCHEMA, Queryable } from "../types";
 import { HttpError } from "../utils/HttpError";
-import { IMultiStepPgQueue, MultiStepJobQueueDb, MultiStepJobQueueDbPayload, ProcessJobResponse, Steps, isMultiStepJobQueueDb } from "./types";
+import { IMultiStepPgQueue, MultiStepPgQueueJob, MultiStepPgQueueJobPayload, ProcessJobResponse, Steps, isMultiStepPgQueueJob } from "./types";
 
 
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { IPgQueue, PgQueue, pgqc } from "../pg-queue";
 
 
 type Logger<T extends object> = {
-    error:(message: string, type?: string, body?: MultiStepJobQueueDb<T>) => void;
+    error:(message: string, type?: string, body?: MultiStepPgQueueJob<T>) => void;
 }
 type Options<T extends object> = {
     custom_id?: string,
@@ -28,7 +28,7 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
     protected schemaName: string;
     protected steps: S;
     protected id: string;
-    protected queue:IPgQueue<MultiStepJobQueueDbPayload<T>>;
+    protected queue:IPgQueue<MultiStepPgQueueJobPayload<T>>;
     protected payloadSchema?: z.Schema<T>;
     protected options?: Options<T>;
 
@@ -39,17 +39,17 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
         this.steps = steps;
         this.id = options?.custom_id ?? this.queueName;
         this.payloadSchema = payloadSchema;
-        this.queue = new PgQueue<MultiStepJobQueueDbPayload<T>>(db, this.queueName, this.schemaName);
+        this.queue = new PgQueue<MultiStepPgQueueJobPayload<T>>(db, this.queueName, this.schemaName);
         this.options = options;
     }
 
     async addJob(payload: T, options?: AddJobOptions): Promise<void> {
-        const multiStepPayload = this.makeMultiStepJobQueueDbPayload(payload);
+        const multiStepPayload = this.makeMultiStepPgQueueJobPayload(payload);
 
         await this.queue.addJob(multiStepPayload, options);
     }
 
-    private makeMultiStepJobQueueDbPayload(payload: T, step_id?: string, customTimeout?: number):MultiStepJobQueueDbPayload<T> {
+    private makeMultiStepPgQueueJobPayload(payload: T, step_id?: string, customTimeout?: number):MultiStepPgQueueJobPayload<T> {
         if (step_id === undefined) step_id = this.steps[0]?.id;
         if (!step_id && !this.steps.find(step => step.id === step_id)) throw new Error("Unknown step id");
 
@@ -61,7 +61,7 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
             }
         }
 
-        const finalPayload: MultiStepJobQueueDbPayload<T> = {
+        const finalPayload: MultiStepPgQueueJobPayload<T> = {
             ...payload,
             multi_step_id: this.id,
             step_id
@@ -70,8 +70,8 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
     }
 
 
-    ownsJob(x: unknown):x is MultiStepJobQueueDb<T> {
-        const isQueueSchema = isMultiStepJobQueueDb(x);
+    ownsJob(x: unknown):x is MultiStepPgQueueJob<T> {
+        const isQueueSchema = isMultiStepPgQueueJob(x);
         return isQueueSchema && x.payload.multi_step_id===this.id;
     }
 
@@ -81,7 +81,7 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
      * @returns 
      */
     async processNextJob(pIgnoreMaxConcurrency?: boolean, transaction?: Queryable): Promise<ProcessJobResponse> {
-        const job = await pgqc.pickNextJob<T>(transaction ?? this.db, this.queueName, undefined, this.id, pIgnoreMaxConcurrency, this.schemaName) as MultiStepJobQueueDb<T> | undefined;
+        const job = await pgqc.pickNextJob<T>(transaction ?? this.db, this.queueName, undefined, this.id, pIgnoreMaxConcurrency, this.schemaName) as MultiStepPgQueueJob<T> | undefined;
 
         if( job ) {
             return this.runNextStepForJob(job);
@@ -103,13 +103,13 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
                 status: 'error',
                 error: {
                     type: 'incompatible-job',
-                    sub_type: isMultiStepJobQueueDb(x)? 'job-not-owned' : 'bad-job-format'
+                    sub_type: isMultiStepPgQueueJob(x)? 'job-not-owned' : 'bad-job-format'
                 }
             }
         }
     }
 
-    private async runNextStepForJob(body:MultiStepJobQueueDb<T>, transaction?: Queryable):Promise<ProcessJobResponse> {
+    private async runNextStepForJob(body:MultiStepPgQueueJob<T>, transaction?: Queryable):Promise<ProcessJobResponse> {
         try {
             const idx = this.steps.findIndex(x => x.id === (body.payload.step_id ?? this.steps[0]?.id));
             const step = idx>-1? this.steps[idx] : undefined;
@@ -129,7 +129,7 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
             // Add a job to the queue to run this function again, for the next step 
             if( final_release_action==='complete' ) {
                 if (next_step && !this.options?.testing?.prevent_fan_out) {
-                    const nextPayload = this.makeMultiStepJobQueueDbPayload(body.payload, next_step.id, next_step.custom_timeout_milliseconds);
+                    const nextPayload = this.makeMultiStepPgQueueJobPayload(body.payload, next_step.id, next_step.custom_timeout_milliseconds);
                     this.queue.addJob(nextPayload, {transaction});
                 }
             }

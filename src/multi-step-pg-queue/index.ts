@@ -1,9 +1,10 @@
 import { MultiStepPgQueue } from "./MultiStepPgQueue";
-import { IMultiStepPgQueue } from "./types";
+import { IMultiStepPgQueue, MultiStepPgQueuePayloadSchemaBase } from "./types";
 
 
 export {
-    MultiStepPgQueue
+    MultiStepPgQueue,
+    MultiStepPgQueuePayloadSchemaBase
 }
 
 export type {

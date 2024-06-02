@@ -1,5 +1,3 @@
-import {z, ZodAny} from "zod";
-
 
 export interface Queryable {
     exec(q:string):Promise<void>,

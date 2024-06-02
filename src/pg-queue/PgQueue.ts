@@ -3,7 +3,7 @@
 
 
 import { AddJobOptions, DEFAULT_SCHEMA, DbQuery, Queryable } from "../types";
-import {  IPgQueue, JobQueueDb, JobQueueReleaseTypes, PickedJob, isJobQueueDb } from "./types";
+import {  IPgQueue, PgQueueJob, PgQueueJobReleaseTypes, PickedJob, isPgQueueJob, isPgQueueJobStrict } from "./types";
 import { pgqc } from ".";
 import { PostgresHelpers } from "@andyrmitchell/utils";
 import { IPgQueueConfig, PgQueueConfig } from "../pg-queue-config";
@@ -29,7 +29,7 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
         await this.addJobByQuery(this.makeAddJobQuery(payload, options?.retries, options?.start_after), options?.transaction);   
     }
 
-    private makeAddJobQuery(pPayload: T, pRetriesRemaining = 10, pStartAfter?: Date, customTimeoutMs?:number, customTimeoutWithResult?:JobQueueReleaseTypes): DbQuery {
+    private makeAddJobQuery(pPayload: T, pRetriesRemaining = 10, pStartAfter?: Date, customTimeoutMs?:number, customTimeoutWithResult?:PgQueueJobReleaseTypes): DbQuery {
         if ( !pPayload || pRetriesRemaining == null) {
             throw new Error('Parameters cannot be null');
         }
@@ -63,7 +63,7 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
         if( job ) {
             return {
                 job,
-                release: async (pResult: JobQueueReleaseTypes) => {
+                release: async (pResult: PgQueueJobReleaseTypes) => {
                     await pgqc.releaseJob(this.db, job.job_id, pResult, this.escapedSchemaName);
                 },
                 keepAlive: async () => {
@@ -74,12 +74,12 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
         return undefined;
     }
 
-    async releaseJob(pJobId: number, pResult: JobQueueReleaseTypes, transaction?: Queryable): Promise<void> {
+    async releaseJob(pJobId: number, pResult: PgQueueJobReleaseTypes, transaction?: Queryable): Promise<void> {
         return await pgqc.releaseJob(transaction ?? this.db, pJobId, pResult, this.escapedSchemaName);
     }
 
-    ownsJob(x: unknown):x is JobQueueDb<T> {
-        const isQueueSchema = isJobQueueDb(x);
+    ownsJob(x: unknown):x is PgQueueJob<T> {
+        const isQueueSchema = isPgQueueJob(x);
         return isQueueSchema;
     }
 

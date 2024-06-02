@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 import { IPgQueueBase, Queryable } from "../types";
-import { JobQueueReleaseTypes, JobQueueDb, isJobQueueDb, IPgQueue } from "../pg-queue";
+import { PgQueueJobReleaseTypes, PgQueueJob, isPgQueueJob, IPgQueue } from "../pg-queue";
 
 
 
@@ -37,7 +37,7 @@ export type ProcessJobResponse = {
 type StepID = string;
 type Step<T> = {
     id: StepID, 
-    handler: (job:MultiStepJobQueueDbPayload<T>, jobID: number) => Promise<void | JobQueueReleaseTypes>,
+    handler: (job:MultiStepPgQueueJobPayload<T>, jobID: number) => Promise<void | PgQueueJobReleaseTypes>,
     custom_timeout_milliseconds?: number
 }
 export type Steps<T> = Step<T>[];
@@ -46,24 +46,24 @@ export type MultiStep<T extends object> = {
     id: MultiStepID, 
     queue_name: string, 
     create: (payload:T, transaction?:postgres.Transaction) => Promise<void>,
-    runStep: (step_id:string, payload:MultiStepJobQueueDbPayload<T>, jobID: number) => Promise<{ next_step?: {id: string, custom_timeout_milliseconds?: number}, release_action?: void | JobQueueReleaseTypes }>,
+    runStep: (step_id:string, payload:MultiStepPgQueueJobPayload<T>, jobID: number) => Promise<{ next_step?: {id: string, custom_timeout_milliseconds?: number}, release_action?: void | PgQueueJobReleaseTypes }>,
     makeAddJobQuery: (payload:T, step_id?:string, customTimeout?:number ) => DbQuery,
     steps: Steps<T>, // CONSTRAINT: Each step may rerun (if it fails), so it should either only execute one mutation command, or guarantee each mutation command is idempotent
     schema?: z.Schema<T>
 }
 */
 
-export const MultiStepPayloadSchemaBase = z.object({ // FYI There's probably more on the payload 
+export const MultiStepPgQueuePayloadSchemaBase = z.object({ // FYI There's probably more on the payload 
     multi_step_id: z.string(),
     step_id: z.string().optional(),
 })
 
-export type MultiStepJobQueueDbPayload<T = object> = T & z.infer<typeof MultiStepPayloadSchemaBase>;
-export type MultiStepJobQueueDb<T = object> = JobQueueDb<MultiStepJobQueueDbPayload<T>>
+export type MultiStepPgQueueJobPayload<T = object> = T & z.infer<typeof MultiStepPgQueuePayloadSchemaBase>;
+export type MultiStepPgQueueJob<T = object> = PgQueueJob<MultiStepPgQueueJobPayload<T>>
 
 
-export function isMultiStepJobQueueDb(x: unknown): x is MultiStepJobQueueDb {
-    return isJobQueueDb(x, MultiStepPayloadSchemaBase);
+export function isMultiStepPgQueueJob(x: unknown): x is MultiStepPgQueueJob {
+    return isPgQueueJob(x, MultiStepPgQueuePayloadSchemaBase);
 }
 
 const MultiStepTestSchema = z.object({

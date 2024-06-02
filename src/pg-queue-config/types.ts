@@ -1,4 +1,4 @@
-import { JobQueueReleaseTypes } from "../pg-queue";
+import { PgQueueJobReleaseTypes } from "../pg-queue";
 
 export interface IPgQueueConfig {
     get():Promise<QueueConfig | undefined>;
@@ -23,7 +23,7 @@ type BaseQueueConfig = {
 
 type QueueConfigTimeout = {
     timeout_milliseconds: number;
-    timeout_with_result: JobQueueReleaseTypes,
+    timeout_with_result: PgQueueJobReleaseTypes,
 }
 
 export type QueueConfigCore = QueueConfigTimeout & {
