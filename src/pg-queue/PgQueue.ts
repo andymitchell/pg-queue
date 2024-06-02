@@ -2,8 +2,8 @@
 
 
 
-import { DEFAULT_SCHEMA, DbQuery, Queryable } from "../types";
-import { IPgQueue, JobQueueDb, JobQueueReleaseTypes, PickedJob, isJobQueueDb } from "./types";
+import { AddJobOptions, DEFAULT_SCHEMA, DbQuery, Queryable } from "../types";
+import {  IPgQueue, JobQueueDb, JobQueueReleaseTypes, PickedJob, isJobQueueDb } from "./types";
 import { pgqc } from ".";
 import { PostgresHelpers } from "@andyrmitchell/utils";
 import { IPgQueueConfig, PgQueueConfig } from "../pg-queue-config";
@@ -25,8 +25,8 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
         this.queueConfig = new PgQueueConfig(this.db, this.queueName, this.escapedSchemaName);
     }
 
-    async addJob(payload: T, retries?: number, startAfter?: Date): Promise<void> {
-        await this.addJobByQuery(this.makeAddJobQuery(payload, retries, startAfter));   
+    async addJob(payload: T, options?: AddJobOptions): Promise<void> {
+        await this.addJobByQuery(this.makeAddJobQuery(payload, options?.retries, options?.start_after), options?.transaction);   
     }
 
     private makeAddJobQuery(pPayload: T, pRetriesRemaining = 10, pStartAfter?: Date, customTimeoutMs?:number, customTimeoutWithResult?:JobQueueReleaseTypes): DbQuery {
@@ -57,8 +57,8 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
        
     }
 
-    async pickNextJob(pIgnoreMaxConcurrency?: boolean): Promise<PickedJob<T> | undefined> {
-        const job = await pgqc.pickNextJob<T>(this.db, this.queueName, undefined, undefined, pIgnoreMaxConcurrency, this.escapedSchemaName);
+    async pickNextJob(pIgnoreMaxConcurrency?: boolean, transaction?: Queryable): Promise<PickedJob<T> | undefined> {
+        const job = await pgqc.pickNextJob<T>(transaction ?? this.db, this.queueName, undefined, undefined, pIgnoreMaxConcurrency, this.escapedSchemaName);
 
         if( job ) {
             return {
@@ -74,8 +74,8 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
         return undefined;
     }
 
-    async releaseJob(pJobId: number, pResult: JobQueueReleaseTypes): Promise<void> {
-        return await pgqc.releaseJob(this.db, pJobId, pResult, this.escapedSchemaName);
+    async releaseJob(pJobId: number, pResult: JobQueueReleaseTypes, transaction?: Queryable): Promise<void> {
+        return await pgqc.releaseJob(transaction ?? this.db, pJobId, pResult, this.escapedSchemaName);
     }
 
     ownsJob(x: unknown):x is JobQueueDb<T> {

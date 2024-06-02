@@ -272,6 +272,7 @@ I paused development because at the time, pg_net wasn't mature enough to use wit
 
 ### Little Bits
 
+- Add tests that verify all operations run inside a transaction
 - A queue can only use supabase-vault if supabase installed
 - Switch pgmock for pglite in tests, when pglite fixes the throw_ok error (see TODO in migration.test.ts)
 - Postgres tests can just be flattened, using testhelpers_ by default, but can be converted to PgTap if needed in CLI. 

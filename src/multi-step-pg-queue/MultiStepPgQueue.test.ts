@@ -4,7 +4,7 @@ import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode";
 import { TestDb } from "../utils/TestDb";
 import { MultiStepPgQueue } from "./MultiStepPgQueue";
 import { PgTestable } from "@andyrmitchell/pg-testable";
-import { Queryable } from "../types";
+
 
 
 // Keep it cached betweeen tests

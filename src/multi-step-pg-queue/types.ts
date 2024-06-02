@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import { IPgQueueBase } from "../types";
+import { IPgQueueBase, Queryable } from "../types";
 import { JobQueueReleaseTypes, JobQueueDb, isJobQueueDb, IPgQueue } from "../pg-queue";
 
 
@@ -8,7 +8,7 @@ import { JobQueueReleaseTypes, JobQueueDb, isJobQueueDb, IPgQueue } from "../pg-
 export interface IMultiStepPgQueue<T extends object> extends IPgQueueBase<T> {
 
     getRawQueue():IPgQueue<T>;
-    processNextJob(pIgnoreMaxConcurrency?: boolean): Promise<ProcessJobResponse>;
+    processNextJob(pIgnoreMaxConcurrency?: boolean, transaction?: Queryable): Promise<ProcessJobResponse>;
 
 };
 

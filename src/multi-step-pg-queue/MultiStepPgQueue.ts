@@ -1,4 +1,4 @@
-import {  DEFAULT_SCHEMA, Queryable } from "../types";
+import {  AddJobOptions, DEFAULT_SCHEMA, Queryable } from "../types";
 import { HttpError } from "../utils/HttpError";
 import { IMultiStepPgQueue, MultiStepJobQueueDb, MultiStepJobQueueDbPayload, ProcessJobResponse, Steps, isMultiStepJobQueueDb } from "./types";
 
@@ -43,10 +43,10 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
         this.options = options;
     }
 
-    async addJob(payload: T, retries?: number | undefined, startAfter?: Date | undefined): Promise<void> {
+    async addJob(payload: T, options?: AddJobOptions): Promise<void> {
         const multiStepPayload = this.makeMultiStepJobQueueDbPayload(payload);
 
-        await this.queue.addJob(multiStepPayload, retries, startAfter);
+        await this.queue.addJob(multiStepPayload, options);
     }
 
     private makeMultiStepJobQueueDbPayload(payload: T, step_id?: string, customTimeout?: number):MultiStepJobQueueDbPayload<T> {
@@ -80,8 +80,8 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
      * @param pIgnoreMaxConcurrency 
      * @returns 
      */
-    async processNextJob(pIgnoreMaxConcurrency?: boolean): Promise<ProcessJobResponse> {
-        const job = await pgqc.pickNextJob<T>(this.db, this.queueName, undefined, this.id, pIgnoreMaxConcurrency, this.schemaName) as MultiStepJobQueueDb<T> | undefined;
+    async processNextJob(pIgnoreMaxConcurrency?: boolean, transaction?: Queryable): Promise<ProcessJobResponse> {
+        const job = await pgqc.pickNextJob<T>(transaction ?? this.db, this.queueName, undefined, this.id, pIgnoreMaxConcurrency, this.schemaName) as MultiStepJobQueueDb<T> | undefined;
 
         if( job ) {
             return this.runNextStepForJob(job);
@@ -95,9 +95,9 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
      * @param x 
      * @returns 
      */
-    async processJob(x: unknown):Promise<ProcessJobResponse> {
+    async processJob(x: unknown, transaction?: Queryable):Promise<ProcessJobResponse> {
         if( this.ownsJob(x) ) {
-            return await this.runNextStepForJob(x);
+            return await this.runNextStepForJob(x, transaction);
         } else {
             return {
                 status: 'error',
@@ -109,7 +109,7 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
         }
     }
 
-    private async runNextStepForJob(body:MultiStepJobQueueDb<T>):Promise<ProcessJobResponse> {
+    private async runNextStepForJob(body:MultiStepJobQueueDb<T>, transaction?: Queryable):Promise<ProcessJobResponse> {
         try {
             const idx = this.steps.findIndex(x => x.id === (body.payload.step_id ?? this.steps[0]?.id));
             const step = idx>-1? this.steps[idx] : undefined;
@@ -124,13 +124,13 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
             
             const release_action = await step.handler(body.payload, body.job_id);
             const final_release_action = release_action? release_action : 'complete';
-            await this.queue.releaseJob(body.job_id, final_release_action);
+            await this.queue.releaseJob(body.job_id, final_release_action, transaction);
 
             // Add a job to the queue to run this function again, for the next step 
             if( final_release_action==='complete' ) {
                 if (next_step && !this.options?.testing?.prevent_fan_out) {
                     const nextPayload = this.makeMultiStepJobQueueDbPayload(body.payload, next_step.id, next_step.custom_timeout_milliseconds);
-                    this.queue.addJob(nextPayload);
+                    this.queue.addJob(nextPayload, {transaction});
                 }
             }
 
@@ -138,7 +138,7 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
         } catch(e) {
             
             console.warn("MultiStep job failed", body, e);
-            await this.queue.releaseJob(body.job_id, 'failed');
+            await this.queue.releaseJob(body.job_id, 'failed', transaction);
 
             if( e instanceof Error ) {
                 if( this.options?.logger ) {

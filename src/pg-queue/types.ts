@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { IPgQueueBase } from "../types";
+import { IPgQueueBase, Queryable } from "../types";
 import { IPgQueueConfig } from "../pg-queue-config";
 
 export interface IPgQueue<T extends object> extends IPgQueueBase<T> {
     //makeAddJobQuery(pPayload: T, pRetriesRemaining?:number, pStartAfter?: Date, customTimeoutMs?:number, customTimeoutWithResult?:JobQueueReleaseTypes): DbQuery
     //addJobByQuery(query:DbQuery, transaction?:Queryable): Promise<void>;
 
-    pickNextJob(pIgnoreMaxConcurrency?: boolean): Promise<PickedJob<T> | undefined> 
-    releaseJob(pJobId: number, pResult: JobQueueReleaseTypes): Promise<void>
+    pickNextJob(pIgnoreMaxConcurrency?: boolean, transaction?: Queryable): Promise<PickedJob<T> | undefined> 
+    releaseJob(pJobId: number, pResult: JobQueueReleaseTypes, transaction?: Queryable): Promise<void>
     ownsJob(x: unknown):x is JobQueueDb<T>;
 
     getConfig():IPgQueueConfig;
