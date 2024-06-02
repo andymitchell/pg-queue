@@ -1,12 +1,13 @@
 
 import { listSubDirectories } from './utils/listSubDirectories';
-import { getCurrentDirectory } from './utils/getCurrentDirectory';
+
 import { IUserInput, QuestionChoice } from './utils/user-input/types';
 import { PgqFileReader } from '../types';
 import { stripTrailingSlash } from '../utils/stripTrailingSlash';
 import { compileMigrationFileName, listMigrationFiles } from '../utils/listMigrationFiles';
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER } from '../../types';
 import {  listMigrationTestFunctions } from '../utils/listMigrationTestFunctions';
+import { getInvocationDirectory } from './utils/getInvocationDirectory';
 
 
 
@@ -147,11 +148,10 @@ async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:PgqFileR
 }
 
 export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
-    let currentDirectory = await getCurrentDirectory();
+    let currentDirectory = await getInvocationDirectory();
     
     currentDirectory = stripTrailingSlash(currentDirectory);
     
-
     const absoluteMigrationsDestinationPath = await getDirectoryFromUser(
         userInput,
         sqlFileReader,

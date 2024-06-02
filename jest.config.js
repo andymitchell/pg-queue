@@ -6,7 +6,7 @@ module.exports = {
     transform: {
         // Use babel-jest to transform JS files
         '^.+\\.(js|jsx)$': 'babel-jest',
-        '^.+getCurrentDirectory\\.ts$': 'babel-jest',
+        '^.+getInvokedScriptDirectory\\.ts$': 'babel-jest',
         // Use ts-jest for ts/tsx files
         '^.+\\.(ts|tsx)$': 'ts-jest',
     },

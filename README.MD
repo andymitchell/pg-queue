@@ -383,15 +383,15 @@ In jest.config.ts, I had to make the file explicit to use Babel instead of ts-je
 transform: {
         // Use babel-jest to transform JS files
         '^.+\\.(js|jsx)$': 'babel-jest',
-        '^.+getCurrentDirectory\\.ts$': 'babel-jest',
+        '^.+getInvokedScriptDirectory\\.ts$': 'babel-jest',
         // Use ts-jest for ts/tsx files
         '^.+\\.(ts|tsx)$': 'ts-jest',
     },
 ```
 
-An alternative solution would have been to create a __mocks__ folder, with getCurrentDirectory.ts, and then update jest.config.js with: 
+An alternative solution would have been to create a __mocks__ folder, with getInvokedScriptDirectory.ts, and then update jest.config.js with: 
 ```
 moduleNameMapper: {
-    '^./getCurrentDirectory$': '<rootDir>/path/to/__mocks__/getCurrentDirectory.ts',
+    '^./getInvokedScriptDirectory$': '<rootDir>/path/to/__mocks__/getInvokedScriptDirectory.ts',
 },
 ```

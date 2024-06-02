@@ -1,4 +1,8 @@
-export async function getCurrentDirectory() {
+/**
+ * E.g. if invoked as "node ./dist/main.js", this will return "<path-to>/dist"
+ * @returns 
+ */
+export async function getInvokedScriptDirectory() {
     
     if (typeof __dirname !== 'undefined') {
         // CommonJS environment
