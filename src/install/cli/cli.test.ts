@@ -60,7 +60,7 @@ describe('Test file copy', () => {
         // Run it
         await cli(userInput, pgqFileReaderNode);
 
-        const getPgqSchema = (files:SqlFile[]) => files.find(x => x.file_base_sans_timestamp_and_schema==='_pgq_schema');
+        const getPgqSchema = (files:SqlFile[]) => files.find(x => x.file_description==='schema');
 
         // Expect all the files to be at the destination
         const migratedFiles1 = await listMigrationFiles(pgqFileReaderNode, migrationDestPath);
@@ -95,7 +95,7 @@ describe('Test file copy', () => {
         // Run it
         await cli(userInput, pgqFileReaderNode);
 
-        const getPgqSchema = (files:SqlFile[]) => files.find(x => x.file_base_sans_timestamp_and_schema==='_pgq_schema');
+        const getPgqSchema = (files:SqlFile[]) => files.find(x => x.file_description==='schema');
 
         // Expect all the files to be at the destination
         const migratedFiles1 = await listMigrationFiles(pgqFileReaderNode, migrationDestPath);
@@ -161,7 +161,7 @@ describe('Test file copy', () => {
         expect(migratedFiles3[0]!.timestamp+'').toBe(expectedFirstTimestamp);
     
     
-        debugger;
+        
     }, 1000*10)
 
     

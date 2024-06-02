@@ -5,6 +5,7 @@ export async function listSubDirectories(initialDirectoryAbsolutePath: string, e
     const results: string[] = [];
 
     async function recursiveSearch(dir: string) {
+        
         const entries = await fs.readdir(dir, { withFileTypes: true });
 
         for (const entry of entries) {
@@ -13,7 +14,7 @@ export async function listSubDirectories(initialDirectoryAbsolutePath: string, e
                 const fullPath = path.join(dir, entry.name);
 
                 if (entry.isDirectory()) {
-                    const passFilter = !filterNames || filterNames.test(entry.name);
+                    const passFilter = !filterNames || filterNames.test(fullPath);
                     if( passFilter ) {
                         results.push(fullPath);
                     }

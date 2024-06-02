@@ -6,15 +6,19 @@ import { listMigrationFiles } from "../utils/listMigrationFiles";
 
 type Config = {
     schema_name?: string,
-    testing_include_replaced_migration_files?: boolean
+    testing_include_replaced_migration_files?: boolean,
+    testing_debugger?: boolean
 }
 const DEFAULT_CONFIG:Required<Config> = {
     schema_name: DEFAULT_SCHEMA,
-    testing_include_replaced_migration_files: false
+    testing_include_replaced_migration_files: false,
+    testing_debugger: false
 }
 
 export async function install(reader:PgqFileReader, db:Queryable, config?:Config) {
     const fullConfig:Required<Config> = Object.assign({}, DEFAULT_CONFIG, config);
+
+    if( fullConfig.testing_debugger ) debugger;
 
     let migrationFiles = (await listMigrationFiles(reader, undefined, undefined, fullConfig.testing_include_replaced_migration_files)).map(x => x.uri);
 

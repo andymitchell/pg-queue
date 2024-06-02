@@ -6,7 +6,7 @@ export async function listMigrationTestFunctions(reader:PgqFileReader, schema:st
 
     const migrationFiles = await listMigrationFiles(reader);
 
-    const migrationTestFileUris = migrationFiles.filter(x => x.file_base_sans_timestamp_and_schema.endsWith('_tests')).map(x => x.uri);
+    const migrationTestFileUris = migrationFiles.filter(x => x.file_description.endsWith('_tests')).map(x => x.uri);
 
     let functionNames:string[] = [];
     for( const uri of migrationTestFileUris ) {

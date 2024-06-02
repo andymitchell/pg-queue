@@ -31,34 +31,38 @@ async function copyMigrations(reader:PgqFileReader, absoluteDestinationPath: str
     // Convenience lookups
     const existingMigrationDestinationFilesMap:Record<string, (typeof existingMigrationDestinationFiles)[number]> = {};
     existingMigrationDestinationFiles.forEach(x => {
-        existingMigrationDestinationFilesMap[x.file_base_sans_timestamp_and_schema] = x;
+        existingMigrationDestinationFilesMap[x.file_description] = x;
     });
 
     let successCount = 0;
     let seenEnvSpecificInstall = false;
+    
     for( const file of migrationSourceFiles ) {
         const sourceUri = file.uri;
         const sourceContent = (await reader.read(sourceUri))!;
         const preparedContent = sourceContent.replace(GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER, schema);
 
         // See if destination file was found (matching the descriptive filename only, ignoring the timestamp which can change)
-        const existingDestinationFile = existingMigrationDestinationFilesMap[file.file_base_sans_timestamp_and_schema];
+        const existingDestinationFile = existingMigrationDestinationFilesMap[file.file_description];
 
         // Track seeing envspecific_install. It'll throw an error if not found. Purpose: this migration file is always reissued, even if it exists unchanged at the destination, so that if the consumer's environment has changed (e.g. installed an extension), the functions get another chance to install. #ENVSPECIFIC_INSTALL
-        const isEnvSpecificInstall = file.file_base_sans_timestamp_and_schema.indexOf('envspecific_install')>1; 
-        if( isEnvSpecificInstall ) seenEnvSpecificInstall = true;
+        const isEnvSpecificInstall = file.file_description==='envspecific_install';
+        if( isEnvSpecificInstall ) {
+            
+            seenEnvSpecificInstall = true;
+        }
         
         if( existingDestinationFile ) {
             // Issue an updated version, with the latest timestamp (only if it's changed )
             const existingDestinationUri = existingDestinationFile.uri;
             const destinationContent = await reader.read(existingDestinationUri);
             if( preparedContent && (destinationContent!==preparedContent || isEnvSpecificInstall) ) {
-                const newDestinationUri = (await compileMigrationFileName(reader, absoluteDestinationPath, file.file_base_sans_timestamp_and_schema, schema)).uri;
+                const newDestinationUri = (await compileMigrationFileName(reader, absoluteDestinationPath, file.file_description, schema)).uri;
                 await reader.write(newDestinationUri, preparedContent);
                 successCount++
             }
         } else {
-            const destinationUri = (await compileMigrationFileName(reader, absoluteDestinationPath, file.file_base_sans_timestamp_and_schema, schema)).uri;
+            const destinationUri = (await compileMigrationFileName(reader, absoluteDestinationPath, file.file_description, schema)).uri;
             // Convert the schema in the SQL, and attach the schema to the file name
             await reader.write(destinationUri, preparedContent);
             successCount++
@@ -87,10 +91,9 @@ async function copyTests(reader:PgqFileReader, absoluteDestinationPath: string, 
     
     
     const existingTestDestinationFiles = await listMigrationFiles(reader, absoluteDestinationPath, schema);
-
-    const TEST_FILE_ID = '_pgq_tests';
+    const TEST_FILE_DESCRIPTION = 'all_tests';
     for( const existing of existingTestDestinationFiles ) {
-        if( existing.file_base_sans_timestamp_and_schema.indexOf(TEST_FILE_ID)>-1 ) {
+        if( existing.file_description.indexOf(TEST_FILE_DESCRIPTION)>-1 ) {
             reader.remove_file(existing.uri);
         }
     }
@@ -107,7 +110,7 @@ ${testFunctions.map((testFunction, index) => `SELECT lives_ok($$ SELECT ${testFu
 ROLLBACK;
     `.trim()
 
-    const destinationUri = (await compileMigrationFileName(reader, absoluteDestinationPath, TEST_FILE_ID, schema)).uri;
+    const destinationUri = (await compileMigrationFileName(reader, absoluteDestinationPath, TEST_FILE_DESCRIPTION, schema)).uri;
     await reader.write(destinationUri, sql);
 
 }
@@ -178,8 +181,6 @@ export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
         message: `Do you want to put the pg-queue tables and functions in a custom schema in your database? (Leave blank to use ${DEFAULT_SCHEMA})`
     });
     if( !schema ) schema = DEFAULT_SCHEMA;
-        
-    await copyMigrations(sqlFileReader, absoluteMigrationsDestinationPath, schema);
 
     const absoluteTestsDestinationPath = await getDirectoryFromUser(
         userInput,
@@ -189,8 +190,9 @@ export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
         "Where is your db tests directory? (leave blank and no pg-tap test SQL files will be deployed)",
         await listSubDirectories(currentDirectory, ['node_modules', '.git'], /tests\/database$/)
     )
+        
+    await copyMigrations(sqlFileReader, absoluteMigrationsDestinationPath, schema);
 
-    
     if( absoluteTestsDestinationPath ) {
         await copyTests(sqlFileReader, absoluteTestsDestinationPath, schema);
     }
