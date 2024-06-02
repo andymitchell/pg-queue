@@ -1,4 +1,4 @@
-import { MultiStepPgQueue } from "./MultiStepPgQueue";
+import { MultiStepPgQueue, createMultiStepPgQueueAsRecord } from "./MultiStepPgQueue";
 
 import { Queryable } from "../types";
 import { z } from "zod";
@@ -12,23 +12,28 @@ import { z } from "zod";
  */
 export function generateExampleWorkflow(db:Queryable) {
     const workflow = {
-        'v1': new MultiStepPgQueue(db, 'v1', [
-            {
-                id: 'step1',
-                handler: async (payload) => {
+        ...createMultiStepPgQueueAsRecord(
+            db, 
+            'queue_v1', 
+            'v1',
+            [
+                {
+                    id: 'step1',
+                    handler: async (payload) => {
 
+                    }
+                },
+                {
+                    id: 'step2',
+                    handler: async (payload) => {
+                        
+                    }
                 }
-            },
-            {
-                id: 'step2',
-                handler: async (payload) => {
-                    
-                }
-            }
-        ],
-        z.object({name: z.string()})
+            ],
+            z.object({name: z.string()})
         )
     }
+    
 
     return workflow;
 }

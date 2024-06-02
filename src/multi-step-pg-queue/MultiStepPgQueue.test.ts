@@ -37,6 +37,7 @@ describe('MultiStepPgQueue', () => {
         const msq = new MultiStepPgQueue(
             db,
             queueName,
+            queueName,
             [
                 {
                     id: 'no1',
@@ -52,7 +53,6 @@ describe('MultiStepPgQueue', () => {
                 }
             ],
             z.object({name: z.string()}),
-            undefined, 
             db.schema
         )
         const q = msq.getRawQueue();
@@ -100,6 +100,7 @@ describe('MultiStepPgQueue', () => {
         const msq = new MultiStepPgQueue(
             db, 
             queueName,
+            queueName,
             [
                 {
                     id: 'no1',
@@ -109,7 +110,6 @@ describe('MultiStepPgQueue', () => {
                 }
             ],
             z.object({name: z.string()}),
-            undefined, 
             db.schema
         )
         const q = msq.getRawQueue();

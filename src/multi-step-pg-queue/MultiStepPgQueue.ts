@@ -13,12 +13,16 @@ type Logger<T extends object> = {
     error:(message: string, type?: string, body?: MultiStepPgQueueJob<T>) => void;
 }
 type Options<T extends object> = {
-    custom_id?: string,
     logger?: Logger<T>;
     testing?: {
         prevent_fan_out: boolean
     }
 }
+
+export function createMultiStepPgQueueAsRecord<T extends object, K extends string, S extends Steps<T> = Steps<T>>(db:Queryable, queueName:string, id:K, steps:S, payloadSchema?: z.Schema<T>, schema?: string, options?: Options<T>):Record<K, MultiStepPgQueue<T>> {
+    return {[id]: new MultiStepPgQueue<T>(db, queueName, id, steps, payloadSchema, schema, options)} as Record<K, MultiStepPgQueue<T>>
+}
+
 
 
 export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> implements IMultiStepPgQueue<T> {
@@ -27,17 +31,17 @@ export class MultiStepPgQueue<T extends object, S extends Steps<T> = Steps<T>> i
     protected queueName:string;
     protected schemaName: string;
     protected steps: S;
-    protected id: string;
+    readonly id: Readonly<string>;
     protected queue:IPgQueue<MultiStepPgQueueJobPayload<T>>;
     protected payloadSchema?: z.Schema<T>;
     protected options?: Options<T>;
 
-    constructor(db:Queryable, queueName:string, steps:S, payloadSchema?: z.Schema<T>, options?: Options<T>, schema = DEFAULT_SCHEMA) {
+    constructor(db:Queryable, queueName:string, id:string, steps:S, payloadSchema?: z.Schema<T>, schema?: string, options?: Options<T>) {
         this.queueName = queueName;
         this.schemaName = schema ?? DEFAULT_SCHEMA;
         this.db = db;
         this.steps = steps;
-        this.id = options?.custom_id ?? this.queueName;
+        this.id = id;
         this.payloadSchema = payloadSchema;
         this.queue = new PgQueue<MultiStepPgQueueJobPayload<T>>(db, this.queueName, this.schemaName);
         this.options = options;

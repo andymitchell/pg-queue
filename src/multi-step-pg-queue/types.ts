@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { IPgQueueBase, Queryable } from "../types";
 import { PgQueueJobReleaseTypes, PgQueueJob, isPgQueueJob, IPgQueue } from "../pg-queue";
+import { isTypeEqual } from "@andyrmitchell/utils";
 
 
 
@@ -57,8 +58,13 @@ export const MultiStepPgQueuePayloadSchemaBase = z.object({ // FYI There's proba
     multi_step_id: z.string(),
     step_id: z.string().optional(),
 })
+type MultiStepPgQueuePayloadBase = {
+    multi_step_id: string,
+    step_id?: string
+}
+isTypeEqual<z.infer<typeof MultiStepPgQueuePayloadSchemaBase>, MultiStepPgQueuePayloadBase>(true);
 
-export type MultiStepPgQueueJobPayload<T = object> = T & z.infer<typeof MultiStepPgQueuePayloadSchemaBase>;
+export type MultiStepPgQueueJobPayload<T = object> = T & MultiStepPgQueuePayloadBase;
 export type MultiStepPgQueueJob<T = object> = PgQueueJob<MultiStepPgQueueJobPayload<T>>
 
 
