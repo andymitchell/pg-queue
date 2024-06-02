@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PgqFileReader, install, pgqFileReaderNode } from "./install/module";
-import { MultiStepPgQueuePayloadSchemaBase, MultiStepPgQueue } from "./multi-step-pg-queue";
+import { MultiStepPgQueuePayloadSchemaBase, MultiStepPgQueue, createMultiStepPgQueueAsRecord } from "./multi-step-pg-queue";
 import { PgQueueJobReleaseTypes, PgQueue, isPgQueueJob, makePgQueueJobSchema, pgqc } from "./pg-queue";
 import { DEFAULT_SCHEMA, DbQuery, Queryable } from "./types";
 import { PostgresDb } from "./utils/PostgresDb";
@@ -18,6 +18,7 @@ export {
 export {
     PgQueue,
     MultiStepPgQueue,
+    createMultiStepPgQueueAsRecord,
     PgQueueConfig,
     Dispatcher,
     pgqc,
