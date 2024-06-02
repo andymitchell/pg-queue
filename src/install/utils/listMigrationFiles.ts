@@ -23,7 +23,7 @@ export async function listMigrationFiles(reader:PgqFileReader, sourcePath?:strin
     
 
     if( !sourcePath ) {
-        sourcePath = `${getPackageDirectory()}/postgres/migrations`;
+        sourcePath = `${await getPackageDirectory()}/postgres/migrations`;
     }
     sourcePath = stripTrailingSlash(sourcePath);
 

@@ -8,9 +8,15 @@ import { SqlFile, generateMigrationTimestamp, listMigrationFiles } from "../util
 import filenamify from "filenamify";
 import { getPackageDirectory } from "./utils/getPackageDirectory";
 
-const migrationDestPath = `${stripTrailingSlash(getPackageDirectory()!)}/test_cli/migrations`;
-const testDestPath = `${stripTrailingSlash(getPackageDirectory()!)}/test_cli/tests`;
+let migrationDestPath:string;
+let testDestPath:string;
 
+
+
+beforeAll(async () => {
+    migrationDestPath = `${stripTrailingSlash(await getPackageDirectory())}/test_cli/migrations`;
+    testDestPath = `${stripTrailingSlash(await getPackageDirectory())}/test_cli/tests`;
+})
 beforeEach(async () => {
     await pgqFileReaderNode.remove_directory(migrationDestPath, true);
     await pgqFileReaderNode.make_directory(migrationDestPath);

@@ -153,7 +153,7 @@ async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:PgqFileR
 }
 
 export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
-    console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': getPackageDirectory()});
+    console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': await getPackageDirectory()});
 
     let currentDirectory = getInvocationDirectory();
     
