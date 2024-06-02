@@ -2,8 +2,8 @@ import {z, ZodAny} from "zod";
 
 
 export interface Queryable {
-    exec(q:string, transaction?: Queryable):Promise<void>,
-    query<T extends Record<string,any> = Record<string, any>>(query:DbQuery, transaction?: Queryable):Promise<{rows: T[]}>
+    exec(q:string):Promise<void>,
+    query<T extends Record<string,any> = Record<string, any>>(query:DbQuery):Promise<{rows: T[]}>
 }
 
 export interface IPgQueueBase<T extends object> {

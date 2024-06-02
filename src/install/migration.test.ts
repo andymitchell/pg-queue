@@ -24,16 +24,13 @@ beforeAll(async () => {
     reader = pgqFileReaderNode;
 
     queryablePglite = {
-        exec: async (q, tx) => {
-            await (tx ?? dbPglite).exec(q);
+        exec: async (q) => {
+            await dbPglite.exec(q);
         },
-        query: async (query, tx) => {
+        query: async (query) => {
 
-            if (tx) {
-                return tx.query(query);
-            } else {
-                return await dbPglite.query(query.q, query.args);
-            }
+            return await dbPglite.query(query.q, query.args);
+            
         },
     }
 
@@ -156,17 +153,14 @@ describe('migration sql', () => {
         // TODO pglite will stop breaking throws_ok pgtap test, so swap out pgmock to pglite 0.1.6+ to be much faster: https://github.com/electric-sql/pglite/issues/92
         const dbPgmock: PgTestableInstance = new PgTestable({type: 'pgmock'});
         const queryablePgmock: Queryable = {
-            exec: async (q, tx) => {
-                await (tx ?? dbPgmock).exec(q);
+            exec: async (q) => {
+                await dbPgmock.exec(q);
             },
-            query: async (query, tx) => {
+            query: async (query) => {
 
-                if (tx) {
-                    return tx.query(query);
-                } else {
-                    const result = await dbPgmock.query<any>(query.q, query.args);
-                    return result;
-                }
+                const result = await dbPgmock.query<any>(query.q, query.args);
+                return result;
+                
             },
         }
 

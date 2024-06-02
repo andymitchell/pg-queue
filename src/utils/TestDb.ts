@@ -79,19 +79,17 @@ export class TestDb implements Queryable {
 
 function makeQueryable(instance: PgTestableInstance, loadingStatus?:Promise<void>, halt?: {closed?: boolean}):Queryable {
     return {
-        exec: async (q, transaction) => {
+        exec: async (q) => {
             if( halt?.closed ) throw new Error("Closed");
             if( loadingStatus ) await loadingStatus;
-            await (transaction ?? instance).exec(q);
+            await instance.exec(q);
         },
-        query: async (query, transaction) => {
+        query: async (query) => {
             if( halt?.closed ) throw new Error("Closed");
             if( loadingStatus ) await loadingStatus;
-            if( transaction ) {
-                return await transaction.query(query);
-            } else {
-                return await instance.query(query.q, query.args);
-            }
+            
+            return await instance.query(query.q, query.args);
+            
         },
     }
 }

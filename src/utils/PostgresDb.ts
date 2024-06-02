@@ -11,20 +11,14 @@ export class PostgresDb implements Queryable {
         this.sql = postgres(options);
     }
 
-    async exec(q: string, transaction?: Queryable | undefined): Promise<void> {
-        if( transaction ) {
-            await transaction.exec(q);
-        } else {
-            await this.sql.unsafe(q);
-        }
+    async exec(q: string): Promise<void> {
+        await this.sql.unsafe(q);
     }
 
-    async query<T extends Record<string, any> = Record<string, any>>(query: DbQuery, transaction?: Queryable | undefined): Promise<{ rows: T[]; }> {
-        if( transaction ) {
-            return await transaction.query(query);
-        } else {
-            const rows = await this.sql.unsafe(query.q, query.args, {prepare: true}) as T[];
-            return {rows};
-        }
+    async query<T extends Record<string, any> = Record<string, any>>(query: DbQuery): Promise<{ rows: T[]; }> {
+        
+        const rows = await this.sql.unsafe(query.q, query.args, {prepare: true}) as T[];
+        return {rows};
+    
     }
 }

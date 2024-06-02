@@ -53,7 +53,7 @@ export class PgQueue<T extends object> implements IPgQueue<T> {
 
     private async addJobByQuery(query:DbQuery, transaction?:Queryable): Promise<void> {
         // This is just a convenience function - most things have access to 'queryArray'
-        const result = await this.db.query(query, transaction);   
+        const result = await (transaction ?? this.db).query(query);   
        
     }
 
