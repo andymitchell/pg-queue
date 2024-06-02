@@ -1,4 +1,4 @@
-import { packageDirectorySync } from "pkg-dir";
+
 import { pgqFileReaderNode } from "../utils/pgqFileReaderNode";
 import { stripTrailingSlash } from "../utils/stripTrailingSlash";
 import { cli } from "./cli"
@@ -6,9 +6,10 @@ import { IUserInput, QuestionChain } from "./utils/user-input/types"
 import { DEFAULT_SCHEMA } from "../../types";
 import { SqlFile, generateMigrationTimestamp, listMigrationFiles } from "../utils/listMigrationFiles";
 import filenamify from "filenamify";
+import { getPackageDirectory } from "./utils/getPackageDirectory";
 
-const migrationDestPath = `${stripTrailingSlash(packageDirectorySync()!)}/test_cli/migrations`;
-const testDestPath = `${stripTrailingSlash(packageDirectorySync()!)}/test_cli/tests`;
+const migrationDestPath = `${stripTrailingSlash(getPackageDirectory()!)}/test_cli/migrations`;
+const testDestPath = `${stripTrailingSlash(getPackageDirectory()!)}/test_cli/tests`;
 
 beforeEach(async () => {
     await pgqFileReaderNode.remove_directory(migrationDestPath, true);

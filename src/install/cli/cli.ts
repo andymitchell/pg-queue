@@ -9,7 +9,8 @@ import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER } from '../../types
 import {  listMigrationTestFunctions } from '../utils/listMigrationTestFunctions';
 import { getInvocationDirectory } from './utils/getInvocationDirectory';
 import { getInvokedScriptDirectory } from './utils/getInvokedScriptDirectory';
-import { packageDirectorySync } from 'pkg-dir';
+import { getPackageDirectory } from './utils/getPackageDirectory';
+
 
 
 
@@ -152,9 +153,9 @@ async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:PgqFileR
 }
 
 export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
-    console.log("Environment Overview", {'invocation_dir': await getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': packageDirectorySync()});
+    console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': getPackageDirectory()});
 
-    let currentDirectory = await getInvocationDirectory();
+    let currentDirectory = getInvocationDirectory();
     
     currentDirectory = stripTrailingSlash(currentDirectory);
     

@@ -1,8 +1,9 @@
 
-import { getInvokedScriptDirectory } from "../cli/utils/getInvokedScriptDirectory";
+
 import { PgqFileReader } from "../types";
 import { stripTrailingSlash } from "./stripTrailingSlash";
 import filenamify from 'filenamify';
+import { getPackageDirectory } from "../cli/utils/getPackageDirectory";
 
 
 export type SqlFile = {
@@ -20,7 +21,10 @@ const SCHEMA_SEPERATOR = filenamify('__$');
 
 export async function listMigrationFiles(reader:PgqFileReader, sourcePath?:string, filterSchema?: string, includeReplaced?: boolean):Promise<SqlFile[]> {
     
-    if( !sourcePath ) sourcePath = `${await getInvokedScriptDirectory()}/../postgres/migrations`
+
+    if( !sourcePath ) {
+        sourcePath = `${getPackageDirectory()}/postgres/migrations`;
+    }
     sourcePath = stripTrailingSlash(sourcePath);
 
     if( !reader.has_directory(sourcePath) ) {
