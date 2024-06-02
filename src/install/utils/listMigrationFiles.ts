@@ -1,4 +1,5 @@
-import { packageDirectorySync } from "pkg-dir";
+
+import { getInvokedScriptDirectory } from "../cli/utils/getInvokedScriptDirectory";
 import { PgqFileReader } from "../types";
 import { stripTrailingSlash } from "./stripTrailingSlash";
 import filenamify from 'filenamify';
@@ -17,9 +18,14 @@ export type SqlFile = {
 
 const SCHEMA_SEPERATOR = filenamify('__$');
 
-export async function listMigrationFiles(reader:PgqFileReader, sourcePath = `${packageDirectorySync()}/postgres/migrations`, filterSchema?: string, includeReplaced?: boolean):Promise<SqlFile[]> {
+export async function listMigrationFiles(reader:PgqFileReader, sourcePath?:string, filterSchema?: string, includeReplaced?: boolean):Promise<SqlFile[]> {
     
+    if( !sourcePath ) sourcePath = `${await getInvokedScriptDirectory()}/../postgres/migrations`
     sourcePath = stripTrailingSlash(sourcePath);
+
+    if( !reader.has_directory(sourcePath) ) {
+        throw new Error("Cannot listMigrationFiles. Unknown sourcePath: "+sourcePath);
+    }
 
     const prepareSqlFile = (path:string, file:string):SqlFile => {
         const match = /^(\d+)/.exec(file);
@@ -59,6 +65,8 @@ export async function listMigrationFiles(reader:PgqFileReader, sourcePath = `${p
 
     
     return files
+
+    
 }
 
 function padZero(number:number, maxLength:number) {

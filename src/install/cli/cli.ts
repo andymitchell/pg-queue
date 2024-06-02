@@ -8,6 +8,8 @@ import { compileMigrationFileName, listMigrationFiles } from '../utils/listMigra
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER } from '../../types';
 import {  listMigrationTestFunctions } from '../utils/listMigrationTestFunctions';
 import { getInvocationDirectory } from './utils/getInvocationDirectory';
+import { getInvokedScriptDirectory } from './utils/getInvokedScriptDirectory';
+import { packageDirectorySync } from 'pkg-dir';
 
 
 
@@ -19,6 +21,8 @@ async function copyMigrations(reader:PgqFileReader, absoluteDestinationPath: str
     if( !hasDestinationDirectory ) {
         throw new Error("Destination directory does not exist");
     }
+
+    
 
     const migrationSourceFiles = await listMigrationFiles(reader);
     const existingMigrationDestinationFiles = await listMigrationFiles(reader, absoluteDestinationPath, schema);
@@ -148,6 +152,8 @@ async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:PgqFileR
 }
 
 export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
+    console.log("Environment Overview", {'invocation_dir': await getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': packageDirectorySync()});
+
     let currentDirectory = await getInvocationDirectory();
     
     currentDirectory = stripTrailingSlash(currentDirectory);
