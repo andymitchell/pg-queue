@@ -20,7 +20,7 @@ import { sleep } from "@andyrmitchell/utils";
 
 
 
-type DispatcherOptions = {
+export type DispatcherOptions = {
     testing?: {
         max_loops?: number,
         call_synchronously?: boolean,
