@@ -96,6 +96,16 @@ describe('Dispatcher', () => {
         await sleep(2000);
         expect(state.job_counter).toBe(1);
         
+        const completesPromise = new Promise<'success' | 'timeout'>(async resolve => {
+            const timeout = setTimeout(() => {
+                resolve('timeout');
+            }, 10000);
+            await dispatcher.onceComplete();
+            resolve('success');
+            clearTimeout(timeout);
+        });
+
+        expect(await completesPromise).toBe('success');
 
         
     }, 1000*20);

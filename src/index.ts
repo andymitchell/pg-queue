@@ -5,7 +5,7 @@ import { JobQueueReleaseTypes, PgQueue, pgqc } from "./pg-queue";
 import { DEFAULT_SCHEMA, DbQuery, Queryable } from "./types";
 import { PostgresDb } from "./utils/PostgresDb";
 import { PgQueueConfig } from "./pg-queue-config";
-import { Dispatcher } from "./workers";
+import { Dispatcher, DispatcherOptions } from "./workers";
 
 export {
     install,
@@ -31,6 +31,7 @@ export type {
     PgqFileReader,
     Queryable,
     DbQuery,
+    DispatcherOptions,
     JobQueueReleaseTypes
 }
 
