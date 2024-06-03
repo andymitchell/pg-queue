@@ -29,7 +29,7 @@ This library is designed to eliminate all sources of dev ops or maintenance head
     - **PgTap and TypeScript Tests**: Integrate seamlessly with your existing testing suite or CI/CD pipeline, ensuring confidence in every deployment.
 
 - **Queue Essentials with Postgres Advantages**:
-    - **Transactional Safety**: Queue jobs conditional on a larger transaction succeeding, ensuring consistency and reliability.
+    - **Transactional Safety**: Queuing jobs can be made conditional on a larger transaction succeeding, ensuring consistency and reliability.
     - **Fast and Reliable**: Utilizes SKIP LOCKED for efficient job handling.
     - **Automatic Retries and Concurrency Control**: Manage spikes without overwhelming your workers.
 
@@ -52,14 +52,13 @@ But with the exception of Pg-Boss, all of these require either a cloud package o
 I.e. there's either cost in maintenance (self hosting an esoteric system) or cloud (subscriptions, and data location concerns for privacy laws). 
 
 Pg-Boss solved those issues, but still lacks: 
-- Run workers in a serverless environment (e.g. Supabase). Instead, you must set up a fleet of long-running workers. 
+- Pure serverless workers (e.g. Supabase). Instead, you must set up a fleet of long-running workers. 
 - Simple multi-step workflows (replacing spaghetti-ish job spawning with a single array of functions).
 - Language independence. Instead of being primarily in Postgres, it's written in Node.
 - A TypeScript client that can autocomplete / validate each queue's payload. 
 
 
-
-## Set up
+## Set up
 
 ### Installing / Updating
 

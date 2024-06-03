@@ -1,7 +1,6 @@
 // Set up an endpoint per queue 
 
 import { PgQueue } from "../../../pg-queue";
-import { Queryable } from "../../../types";
 import { PostgresDb } from "../../../utils/PostgresDb";
 
 

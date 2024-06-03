@@ -1,4 +1,4 @@
-// Loop over all workflows, or a known workflow, and see if any match the job - and process it import { Queryable } from "../../../types";
+// Loop over all workflows, or a known workflow, and see if any match the job - and process it
 
 import { generateExampleWorkflow } from "../../../multi-step-pg-queue/example";
 import { PostgresDb } from "../../../utils/PostgresDb";
