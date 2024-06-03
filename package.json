@@ -20,7 +20,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "pg-queue-install": "dist/install_cli.mjs"
+    "pg-queue-install-node": "dist/install_cli.mjs"
   },
   "type": "commonjs",
   "files": [
@@ -41,7 +41,7 @@
     "test": "jest",
     "test:watch": "jest --watch"
   },
-  "author": "",
+  "author": "andymitchell",
   "license": "MIT",
   "devDependencies": {
     "@andyrmitchell/pg-testable": "^0.4.0",
@@ -69,5 +69,18 @@
     "postgres": "^3.4.4",
     "uuid": "^9.0.1",
     "zod": "^3.23.8"
+  },
+  "keywords": [
+    "queue",
+    "postgresql",
+    "postgres",
+    "job",
+    "serverless",
+    "supabase",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andymitchell/pg-queue.git"
   }
 }
