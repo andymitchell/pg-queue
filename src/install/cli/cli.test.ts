@@ -5,7 +5,7 @@ import { cli } from "./cli"
 import { DEFAULT_SCHEMA } from "../../types";
 import { SqlFile, generateMigrationTimestamp, listMigrationFiles } from "../utils/listMigrationFiles";
 import filenamify from "filenamify";
-import { IUserInput, QuestionChain, fileIoNode, getPackageDirectory, stripTrailingSlash } from "@andyrmitchell/file-io";
+import { Answer, IUserInput, QuestionChain, fileIoNode, getPackageDirectory, stripTrailingSlash } from "@andyrmitchell/file-io";
 
 let migrationDestPath:string;
 let testDestPath:string;
@@ -34,16 +34,17 @@ describe('Test file copy', () => {
 
 
     class TestUserInput implements IUserInput {
-        async ask(questionChain: QuestionChain): Promise<string | undefined> {
+        async ask(questionChain: QuestionChain): Promise<Answer> {
             if( questionChain.name==='migrations-dir' ) {
-                return migrationDestPath;
+                return {type: 'single', answer: migrationDestPath};
             }
             if( questionChain.name==='tests-dir' ) {
-                return testDestPath;
+                return {type: 'single', answer: testDestPath};
             }
             if( questionChain.name==='schema' ) {
-                return schema;
+                return {type: 'single', answer: schema};
             }
+            return {type: 'abort', answer: undefined};
         }
         close(): void {
             throw new Error("Method not implemented.");

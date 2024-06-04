@@ -153,7 +153,7 @@ async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:IFileIo,
 export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
     console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': await getPackageDirectory()});
 
-    let currentDirectory = getInvocationDirectory();
+    let currentDirectory = await getInvocationDirectory();
     
     currentDirectory = stripTrailingSlash(currentDirectory);
     
@@ -165,7 +165,7 @@ export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
         "Where is your migrations directory (where the pg-queue SQL files will be placed)?",
         await listSubDirectories(currentDirectory, ['node_modules', '.git'], /migrations$/)
     )
-    if( !absoluteMigrationsDestinationPath ) {
+    if( absoluteMigrationsDestinationPath.type!=='single' ) {
         console.warn("Aborting - no destination chosen");
         return;
     }
@@ -175,7 +175,8 @@ export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
         name: 'schema', 
         message: `Do you want to put the pg-queue tables and functions in a custom schema in your database? (Leave blank to use ${DEFAULT_SCHEMA})`
     });
-    if( !schema ) schema = DEFAULT_SCHEMA;
+    const chosenSchema = schema.type==='single'? schema.answer : DEFAULT_SCHEMA;
+    
 
     const absoluteTestsDestinationPath = await getDirectoryFromUser(
         userInput,
@@ -185,11 +186,12 @@ export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
         "Where is your db tests directory? (leave blank and no pg-tap test SQL files will be deployed)",
         await listSubDirectories(currentDirectory, ['node_modules', '.git'], /tests\/database$/)
     )
+    
         
-    await copyMigrations(sqlFileReader, absoluteMigrationsDestinationPath, schema);
+    await copyMigrations(sqlFileReader, absoluteMigrationsDestinationPath.answer, chosenSchema);
 
-    if( absoluteTestsDestinationPath ) {
-        await copyTests(sqlFileReader, absoluteTestsDestinationPath, schema);
+    if( absoluteTestsDestinationPath.type==='single' ) {
+        await copyTests(sqlFileReader, absoluteTestsDestinationPath.answer, chosenSchema);
     }
 }
 
