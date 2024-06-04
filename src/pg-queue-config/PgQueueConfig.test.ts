@@ -1,8 +1,9 @@
 import { PgTestable } from "@andyrmitchell/pg-testable";
-import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode"
+
 import { TestDb } from "../utils/TestDb"
 import { PgQueueConfig } from "./PgQueueConfig";
 import { IPgQueueConfig } from "./types";
+import { fileIoNode } from "@andyrmitchell/file-io";
 
 // Keep it cached betweeen tests
 let provider:PgTestable;
@@ -16,7 +17,7 @@ afterAll(async () => {
 describe('PgQueueConfig', () => {
 
     test('PgQueueConfig set', async () => {
-        const db = new TestDb(pgqFileReaderNode, provider);
+        const db = new TestDb(fileIoNode, provider);
 
         const queueConfig = new PgQueueConfig(db, 'test_q1', db.schema);
         await queueConfig.set({

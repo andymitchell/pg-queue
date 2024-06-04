@@ -77,9 +77,9 @@ The installation process is incremental and idempotent, so you can run it multip
 #### Installing via a live Postgres connection from a TypeScript environment
 
 1. `npm i @andyrmitchell/pg-queue@latest`
-2. `install(reader:PgqFileReader, db:Queryable, config: {schema_name?:string})`
-    - PgqFileReader and Queryable are abstractions for the file system and Postgres respectively
-        - It comes with a PgqFileReader for Node: `pgcFileReaderNode`. Otherwise you'll need to implement the interface PgqFileReader.
+2. `install(reader:IFileIo, db:Queryable, config: {schema_name?:string})`
+    - IFileIo and Queryable are abstractions for the file system and Postgres respectively
+        - It comes with a IFileIo for Node: `pgcFileReaderNode`. Otherwise you'll need to implement the interface IFileIo.
         - It comes with a Queryable for TypeScript/postgres that uses 'postgres' (from npm): `PostgresDb`
     - If you don't provide a schema_name, it'll use the exported const DEFAULT_SCHEMA
     

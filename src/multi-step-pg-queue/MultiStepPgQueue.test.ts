@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode";
+
 
 import { TestDb } from "../utils/TestDb";
 import { MultiStepPgQueue } from "./MultiStepPgQueue";
 import { PgTestable } from "@andyrmitchell/pg-testable";
+import { fileIoNode } from "@andyrmitchell/file-io";
 
 
 
@@ -21,7 +22,7 @@ describe('MultiStepPgQueue', () => {
 
     test('MultiStepPgQueue basic', async () => {
 
-        const db = new TestDb(pgqFileReaderNode, provider);
+        const db = new TestDb(fileIoNode, provider);
 
         const state: {
             current_step?: {
@@ -84,7 +85,7 @@ describe('MultiStepPgQueue', () => {
 
     test('MultiStepPgQueue longrunner style', async () => {
 
-        const db = new TestDb(pgqFileReaderNode, provider);
+        const db = new TestDb(fileIoNode, provider);
 
         const state: {
             current_step?: {

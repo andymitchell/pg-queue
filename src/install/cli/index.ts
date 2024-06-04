@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-import { pgqFileReaderNode } from "../utils/pgqFileReaderNode";
+
+import { UserInputNode, fileIoNode } from "@andyrmitchell/file-io";
 import { cli } from "./cli";
-import { UserInputNode } from "./utils/user-input/UserInputNode";
+
 
 async function main() {
     const userInput = new UserInputNode();
 
-    cli(userInput, pgqFileReaderNode)
+    cli(userInput, fileIoNode)
     
 }
 

@@ -1,8 +1,10 @@
 import { sleep } from "@andyrmitchell/utils";
-import { pgqFileReaderNode } from "../install/utils/pgqFileReaderNode"
+
 import { TestDb } from "../utils/TestDb"
 import { PgQueue } from "./PgQueue";
 import { PgTestable } from "@andyrmitchell/pg-testable";
+import { fileIoNode } from "@andyrmitchell/file-io";
+
 
 
 // Keep it cached betweeen tests
@@ -17,7 +19,7 @@ afterAll(async () => {
 describe('PgQueue', () => {
 
     test('PgQueue add job', async () => {
-        const db = new TestDb(pgqFileReaderNode, provider);
+        const db = new TestDb(fileIoNode, provider);
 
         const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
 
@@ -32,7 +34,7 @@ describe('PgQueue', () => {
     }, 1000*20);
 
     test('PgQueue pick and release job', async () => {
-        const db = new TestDb(pgqFileReaderNode, provider);
+        const db = new TestDb(fileIoNode, provider);
 
         const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
 
@@ -65,7 +67,7 @@ describe('PgQueue', () => {
     }, 1000*20);
 
     test('PgQueue pick and fail job', async () => {
-        const db = new TestDb(pgqFileReaderNode, provider);
+        const db = new TestDb(fileIoNode, provider);
 
         const queue = new PgQueue<{name: string}>(db, 'test_q1', db.schema);
         queue.getConfig().set({

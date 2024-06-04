@@ -1,8 +1,9 @@
+import { IFileIo } from "@andyrmitchell/file-io";
 import { PGQ_SCHEMA_PLACEHOLDER } from "../../types";
-import { PgqFileReader } from "../types";
+
 import { listMigrationFiles } from "./listMigrationFiles";
 
-export async function listMigrationTestFunctions(reader:PgqFileReader, schema:string):Promise<string[]> {
+export async function listMigrationTestFunctions(reader:IFileIo, schema:string):Promise<string[]> {
 
     const migrationFiles = await listMigrationFiles(reader);
 

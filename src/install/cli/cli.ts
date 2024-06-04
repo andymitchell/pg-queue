@@ -1,20 +1,15 @@
 
-import { listSubDirectories } from './utils/listSubDirectories';
 
-import { IUserInput, QuestionChoice } from './utils/user-input/types';
-import { PgqFileReader } from '../types';
-import { stripTrailingSlash } from '../utils/stripTrailingSlash';
 import { compileMigrationFileName, listMigrationFiles } from '../utils/listMigrationFiles';
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER } from '../../types';
-import {  listMigrationTestFunctions } from '../utils/listMigrationTestFunctions';
-import { getInvocationDirectory } from './utils/getInvocationDirectory';
-import { getInvokedScriptDirectory } from './utils/getInvokedScriptDirectory';
-import { getPackageDirectory } from './utils/getPackageDirectory';
+
+import { IFileIo, IUserInput, QuestionChoice, getInvocationDirectory, getInvokedScriptDirectory, getPackageDirectory, listSubDirectories, stripTrailingSlash } from '@andyrmitchell/file-io';
+import { listMigrationTestFunctions } from '../utils/listMigrationTestFunctions';
 
 
 
 
-async function copyMigrations(reader:PgqFileReader, absoluteDestinationPath: string, schema: string): Promise<void> {
+async function copyMigrations(reader:IFileIo, absoluteDestinationPath: string, schema: string): Promise<void> {
 
     absoluteDestinationPath = stripTrailingSlash(absoluteDestinationPath);
 
@@ -78,7 +73,7 @@ async function copyMigrations(reader:PgqFileReader, absoluteDestinationPath: str
     console.log(`${successCount} migration files delivered to destination ${absoluteDestinationPath}`);
 }
 
-async function copyTests(reader:PgqFileReader, absoluteDestinationPath: string, schema: string): Promise<void> {
+async function copyTests(reader:IFileIo, absoluteDestinationPath: string, schema: string): Promise<void> {
 
     absoluteDestinationPath = stripTrailingSlash(absoluteDestinationPath);
 
@@ -115,7 +110,7 @@ ROLLBACK;
 
 }
 
-async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:PgqFileReader, currentDirectory:string, name: string, message:string, suggestedDirs:string[]) {
+async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:IFileIo, currentDirectory:string, name: string, message:string, suggestedDirs:string[]) {
     const chosenDir = await userInput.ask({
         type: suggestedDirs.length? 'list' : 'input',
         name,
@@ -155,7 +150,7 @@ async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:PgqFileR
     return chosenDir;
 }
 
-export async function cli(userInput:IUserInput, sqlFileReader:PgqFileReader) {
+export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
     console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': await getPackageDirectory()});
 
     let currentDirectory = getInvocationDirectory();

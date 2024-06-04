@@ -1,9 +1,6 @@
 
-
-import { PgqFileReader } from "../types";
-import { stripTrailingSlash } from "./stripTrailingSlash";
+import { IFileIo, getPackageDirectory, stripTrailingSlash } from '@andyrmitchell/file-io';
 import filenamify from 'filenamify';
-import { getPackageDirectory } from "../cli/utils/getPackageDirectory";
 
 
 export type SqlFile = {
@@ -22,7 +19,7 @@ const SCHEMA_SEPERATOR = '$$';
 
 
 
-export async function listMigrationFiles(reader:PgqFileReader, sourcePath?:string, filterSchema?: string, includeReplaced?: boolean):Promise<SqlFile[]> {
+export async function listMigrationFiles(reader:IFileIo, sourcePath?:string, filterSchema?: string, includeReplaced?: boolean):Promise<SqlFile[]> {
     
 
     if( !sourcePath ) {
@@ -40,11 +37,12 @@ export async function listMigrationFiles(reader:PgqFileReader, sourcePath?:strin
         .filter(file => file.endsWith('.sql') && (!filterSchema || file.indexOf(schemaPart)>-1))
         .map(file => prepareSqlFile(path, file))
 
-    let files:SqlFile[] = prepareSqlFiles(sourcePath, await reader.list_files(sourcePath, false));
+    let files:SqlFile[] = prepareSqlFiles(sourcePath, (await reader.list_files(sourcePath)).map(x => x.file));
 
     const sourceReplacedPath = `${sourcePath}/_replaced`;
     if( includeReplaced ) {
-        const replacedFiles:SqlFile[] = prepareSqlFiles(sourceReplacedPath, await reader.list_files(sourceReplacedPath, false));
+        const replacingFiles = (await reader.list_files(sourceReplacedPath)).map(x => x.file);
+        const replacedFiles:SqlFile[] = prepareSqlFiles(sourceReplacedPath, replacingFiles);
         files = [...files, ...replacedFiles].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     }
 
@@ -120,7 +118,7 @@ export const prepareSqlFile = (path:string, file:string):SqlFile => {
     }
 }
 
-export async function compileMigrationFileName(reader:PgqFileReader, path:string, file_description:string, schema:string):Promise<{uri:string, file:string}> {
+export async function compileMigrationFileName(reader:IFileIo, path:string, file_description:string, schema:string):Promise<{uri:string, file:string}> {
     if( schema.indexOf('$')>-1 ) throw new Error("Schema cannot have $ in it");
     // Prepare vars
     path = stripTrailingSlash(path);

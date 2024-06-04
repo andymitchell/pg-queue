@@ -1,11 +1,12 @@
 import fetchMock from 'jest-fetch-mock';
 import { TestDb } from '../../utils/TestDb';
-import { pgqFileReaderNode } from '../../install/utils/pgqFileReaderNode';
+
 import { PgQueue } from '../../pg-queue';
 import { QueueConfig } from '../../pg-queue-config/types';
 import { Dispatcher } from './Dispatcher';
 import { sleep } from '@andyrmitchell/utils';
 import { PgTestable } from '@andyrmitchell/pg-testable';
+import { fileIoNode } from '@andyrmitchell/file-io';
 fetchMock.enableMocks(); // CALL BEFORE OTHER IMPORTS
 
 // Keep it cached betweeen tests
@@ -26,7 +27,7 @@ describe('Dispatcher', () => {
 
     test('Dispatcher for queue', async () => {
 
-        const db = new TestDb(pgqFileReaderNode, provider);
+        const db = new TestDb(fileIoNode, provider);
         const queueName = 'test_q1';
         const q = new PgQueue<{name: string}>(db, queueName, db.schema);
         const endpoint_url = 'https://fakedomain.com/test_q1';

@@ -1,7 +1,8 @@
+import { IFileIo } from "@andyrmitchell/file-io";
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER, Queryable } from "../../types";
 
 
-import { PgqFileReader } from "../types";
+
 import { listMigrationFiles } from "../utils/listMigrationFiles";
 
 type Config = {
@@ -15,7 +16,7 @@ const DEFAULT_CONFIG:Required<Config> = {
     testing_debugger: false
 }
 
-export async function install(reader:PgqFileReader, db:Queryable, config?:Config) {
+export async function install(reader:IFileIo, db:Queryable, config?:Config) {
     const fullConfig:Required<Config> = Object.assign({}, DEFAULT_CONFIG, config);
 
     if( fullConfig.testing_debugger ) debugger;

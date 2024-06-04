@@ -1,11 +1,12 @@
 import { PGlite } from "@electric-sql/pglite";
-import { PgqFileReader } from "./types";
+
 import { Queryable } from "../types";
-import { pgqFileReaderNode } from "./utils/pgqFileReaderNode";
+
 import { install } from "./module";
 import { v4 as uuidv4 } from "uuid";
 import { PgTestable, PgTestableInstance } from '@andyrmitchell/pg-testable';
 import { listMigrationTestFunctions } from "./utils/listMigrationTestFunctions";
+import { IFileIo, fileIoNode } from "@andyrmitchell/file-io";
 
 
 
@@ -15,13 +16,13 @@ export function generateUniqueSchema(): string {
 
 let dbPglite: PGlite;
 
-let reader: PgqFileReader;
+let reader: IFileIo;
 let queryablePglite: Queryable;
 
 beforeAll(async () => {
     dbPglite = new PGlite();
 
-    reader = pgqFileReaderNode;
+    reader = fileIoNode;
 
     queryablePglite = {
         exec: async (q) => {
