@@ -3,7 +3,7 @@
 import { compileMigrationFileName, listMigrationFiles } from '../utils/listMigrationFiles';
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER } from '../../types';
 
-import { IFileIo, IUserInput, QuestionChoice, getInvocationDirectory, getInvokedScriptDirectory, getPackageDirectory, listSubDirectories, stripTrailingSlash } from '@andyrmitchell/file-io';
+import { IFileIo, IUserInput, QuestionChoice, getDirectoryFromUser, getInvocationDirectory, getInvokedScriptDirectory, getPackageDirectory, listSubDirectories, stripTrailingSlash } from '@andyrmitchell/file-io';
 import { listMigrationTestFunctions } from '../utils/listMigrationTestFunctions';
 
 
@@ -110,46 +110,6 @@ ROLLBACK;
 
 }
 
-async function getDirectoryFromUser(userInput:IUserInput, sqlFileReader:IFileIo, currentDirectory:string, name: string, message:string, suggestedDirs:string[]) {
-    const chosenDir = await userInput.ask({
-        type: suggestedDirs.length? 'list' : 'input',
-        name,
-        message,
-        choices: [
-            ...suggestedDirs.map(name => ({type: 'choice', name} as QuestionChoice)),
-            {
-                type: 'choice', 
-                name: "Other",
-                next: {
-                    type: 'input',
-                    name: 'other',
-                    message: "Enter a directory:",
-                    validate: async (input) => {
-                        const possiblePath = `${currentDirectory}/${input}`;
-                        if( (await sqlFileReader.has_directory(input)) || (await sqlFileReader.has_directory(possiblePath)) ) {
-                            return true;
-                        } else {
-                            return `Please choose a directory that exists`;
-                        }
-                    },
-                    filter: async (input) => {
-                        const possiblePath = `${currentDirectory}/${input}`;
-                        if( (await sqlFileReader.has_directory(input)) ) {
-                            return input;
-                        } else if( await sqlFileReader.has_directory(possiblePath) ) {
-                            return possiblePath;
-                        } else {
-                            throw new Error("Not a known dir");
-                        }
-                    }
-                }
-            }
-        ]
-    });
-
-    return chosenDir;
-}
-
 export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
     console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': await getPackageDirectory()});
 
@@ -165,7 +125,7 @@ export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
         "Where is your migrations directory (where the pg-queue SQL files will be placed)?",
         await listSubDirectories(currentDirectory, ['node_modules', '.git'], /migrations$/)
     )
-    if( absoluteMigrationsDestinationPath.type!=='single' ) {
+    if( !absoluteMigrationsDestinationPath ) {
         console.warn("Aborting - no destination chosen");
         return;
     }
@@ -188,10 +148,10 @@ export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
     )
     
         
-    await copyMigrations(sqlFileReader, absoluteMigrationsDestinationPath.answer, chosenSchema);
+    await copyMigrations(sqlFileReader, absoluteMigrationsDestinationPath, chosenSchema);
 
-    if( absoluteTestsDestinationPath.type==='single' ) {
-        await copyTests(sqlFileReader, absoluteTestsDestinationPath.answer, chosenSchema);
+    if( absoluteTestsDestinationPath ) {
+        await copyTests(sqlFileReader, absoluteTestsDestinationPath, chosenSchema);
     }
 }
 

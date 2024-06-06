@@ -62,7 +62,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@andyrmitchell/file-io": "^0.4.0",
+    "@andyrmitchell/file-io": "^0.8.2",
     "@andyrmitchell/utils": "^0.4.0",
     "@types/inquirer": "^9.0.7",
     "inquirer": "^9.2.22",

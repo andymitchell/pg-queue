@@ -132,7 +132,7 @@ describe('Test file copy', () => {
         const migratedFiles1 = await listMigrationFiles(fileIoNode, migrationDestPath, schema);
 
         // Edit the first migrated file, so our app sees it's a different version (concluding it's older)
-        fileIoNode.write(migratedFiles1[0]!.uri, 'edit', true);
+        fileIoNode.write(migratedFiles1[0]!.uri, 'edit', {append: true});
         
         // Run it again
         await cli(userInput, fileIoNode);
