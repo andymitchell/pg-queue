@@ -3,7 +3,7 @@
 import { compileMigrationFileName, listMigrationFiles } from '../utils/listMigrationFiles';
 import { DEFAULT_SCHEMA, GLOBAL_MATCH_PGQ_SCHEMA_PLACEHOLDER } from '../../types';
 
-import { IFileIo, IUserInput, QuestionChoice, getDirectoryFromUser, getInvocationDirectory, getInvokedScriptDirectory, getPackageDirectory, listSubDirectories, stripTrailingSlash } from '@andyrmitchell/file-io';
+import { IFileIo, IUserInput, QuestionChoice, getDirectoryFromUser, getInvocationDirectory, getPackageDirectory, listSubDirectories, stripTrailingSlash } from '@andyrmitchell/file-io';
 import { listMigrationTestFunctions } from '../utils/listMigrationTestFunctions';
 
 
@@ -111,7 +111,7 @@ ROLLBACK;
 }
 
 export async function cli(userInput:IUserInput, sqlFileReader:IFileIo) {
-    console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'invocation_script_dir': await getInvokedScriptDirectory(), 'pkg_dir': await getPackageDirectory()});
+    console.log("Environment Overview", {'invocation_dir': getInvocationDirectory(), 'pkg_dir': await getPackageDirectory()});
 
     let currentDirectory = await getInvocationDirectory();
     

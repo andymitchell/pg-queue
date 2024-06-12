@@ -482,15 +482,15 @@ In jest.config.ts, I had to make the file explicit to use Babel instead of ts-je
 transform: {
         // Use babel-jest to transform JS files
         '^.+\\.(js|jsx)$': 'babel-jest',
-        '^.+getInvokedScriptDirectory\\.ts$': 'babel-jest',
+        '^.+theFileWithImportMetaUrl\\.ts$': 'babel-jest',
         // Use ts-jest for ts/tsx files
         '^.+\\.(ts|tsx)$': 'ts-jest',
     },
 ```
 
-An alternative solution would have been to create a __mocks__ folder, with getInvokedScriptDirectory.ts, and then update jest.config.js with: 
+An alternative solution would have been to create a __mocks__ folder, with theFileWithImportMetaUrl.ts, and then update jest.config.js with: 
 ```
 moduleNameMapper: {
-    '^./getInvokedScriptDirectory$': '<rootDir>/path/to/__mocks__/getInvokedScriptDirectory.ts',
+    '^./theFunctionWithImportMetaUrl$': '<rootDir>/path/to/__mocks__/theFileWithImportMetaUrl.ts',
 },
 ```
